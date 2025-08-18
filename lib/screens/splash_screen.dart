@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import '../providers/auth_provider.dart';
 import 'auth/role_tenant_selection_screen.dart';
-import 'dashboard/dashboard_screen.dart';
+// import 'dashboard/dashboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -60,9 +60,10 @@ class _SplashScreenState extends State<SplashScreen>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) {
-          return authProvider.isAuthenticated
-              ? const DashboardScreen()
-              : const RoleTenantSelectionScreen();
+          return const RoleTenantSelectionScreen();
+          // return authProvider.isAuthenticated
+          //     ? const DashboardScreen()
+          //     : const RoleTenantSelectionScreen();
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);

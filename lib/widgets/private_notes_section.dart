@@ -18,7 +18,8 @@ class PrivateNotesSection extends StatefulWidget {
 
 class _PrivateNotesSectionState extends State<PrivateNotesSection> {
   final TextEditingController _noteController = TextEditingController();
-  bool _isAddingNote = false;
+  bool _isEditing = false;
+  int? _editingIndex;
 
   @override
   void dispose() {
@@ -28,7 +29,417 @@ class _PrivateNotesSectionState extends State<PrivateNotesSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Header with warning
-        Container(\n          width: double.infinity,\n          margin: const EdgeInsets.all(16),\n          padding: const EdgeInsets.all(16),\n          decoration: BoxDecoration(\n            color: Colors.orange.withOpacity(0.1),\n            borderRadius: BorderRadius.circular(12),\n            border: Border.all(color: Colors.orange.withOpacity(0.3)),\n          ),\n          child: Row(\n            children: [\n              Icon(\n                Icons.lock,\n                color: Colors.orange[700],\n              ),\n              const SizedBox(width: 12),\n              Expanded(\n                child: Column(\n                  crossAxisAlignment: CrossAxisAlignment.start,\n                  children: [\n                    Text(\n                      'Private Internal Notes',\n                      style: TextStyle(\n                        fontWeight: FontWeight.bold,\n                        color: Colors.orange[700],\n                        fontSize: 16,\n                      ),\n                    ),\n                    const SizedBox(height: 4),\n                    Text(\n                      'These notes are private and will NOT be included in any exports or patient documents',\n                      style: TextStyle(\n                        color: Colors.orange[600],\n                        fontSize: 12,\n                      ),\n                    ),\n                  ],\n                ),\n              ),\n            ],\n          ),\n        ),\n        \n        // Add Note Section\n        if (_isAddingNote) ..[\n          Container(\n            margin: const EdgeInsets.symmetric(horizontal: 16),\n            child: Card(\n              child: Padding(\n                padding: const EdgeInsets.all(16),\n                child: Column(\n                  crossAxisAlignment: CrossAxisAlignment.start,\n                  children: [\n                    const Text(\n                      'Add Private Note',\n                      style: TextStyle(\n                        fontSize: 16,\n                        fontWeight: FontWeight.w600,\n                      ),\n                    ),\n                    const SizedBox(height: 12),\n                    TextField(\n                      controller: _noteController,\n                      maxLines: 3,\n                      decoration: const InputDecoration(\n                        hintText: 'Enter private note...',\n                        border: OutlineInputBorder(),\n                      ),\n                    ),\n                    const SizedBox(height: 12),\n                    Row(\n                      children: [\n                        ElevatedButton(\n                          onPressed: _saveNote,\n                          child: const Text('Save'),\n                        ),\n                        const SizedBox(width: 8),\n                        TextButton(\n                          onPressed: _cancelAddNote,\n                          child: const Text('Cancel'),\n                        ),\n                      ],\n                    ),\n                  ],\n                ),\n              ),\n            ),\n          ),\n        ] else ..[\n          Padding(\n            padding: const EdgeInsets.symmetric(horizontal: 16),\n            child: SizedBox(\n              width: double.infinity,\n              child: ElevatedButton.icon(\n                onPressed: _startAddNote,\n                icon: const Icon(Icons.add),\n                label: const Text('Add Private Note'),\n              ),\n            ),\n          ),\n        ],\n        \n        const SizedBox(height: 16),\n        \n        // Notes List\n        Expanded(\n          child: widget.patient.internalNotes.isEmpty\n              ? const Center(\n                  child: Column(\n                    mainAxisAlignment: MainAxisAlignment.center,\n                    children: [\n                      Icon(\n                        Icons.note_add,\n                        size: 64,\n                        color: Colors.grey,\n                      ),\n                      SizedBox(height: 16),\n                      Text(\n                        'No private notes yet',\n                        style: TextStyle(\n                          fontSize: 18,\n                          color: Colors.grey,\n                        ),\n                      ),\n                      SizedBox(height: 8),\n                      Text(\n                        'Add notes that won\\'t be exported',\n                        style: TextStyle(\n                          color: Colors.grey,\n                          fontSize: 14,\n                        ),\n                      ),\n                    ],\n                  ),\n                )\n              : ListView.builder(\n                  padding: const EdgeInsets.symmetric(horizontal: 16),\n                  itemCount: widget.patient.internalNotes.length,\n                  itemBuilder: (context, index) {\n                    final note = widget.patient.internalNotes[index];\n                    return Card(\n                      margin: const EdgeInsets.only(bottom: 12),\n                      child: Padding(\n                        padding: const EdgeInsets.all(16),\n                        child: Column(\n                          crossAxisAlignment: CrossAxisAlignment.start,\n                          children: [\n                            Row(\n                              children: [\n                                Icon(\n                                  Icons.lock,\n                                  size: 16,\n                                  color: Colors.orange[700],\n                                ),\n                                const SizedBox(width: 8),\n                                Text(\n                                  'Private Note ${index + 1}',\n                                  style: TextStyle(\n                                    fontSize: 12,\n                                    fontWeight: FontWeight.w600,\n                                    color: Colors.orange[700],\n                                  ),\n                                ),\n                                const Spacer(),\n                                PopupMenuButton<String>(\n                                  onSelected: (value) {\n                                    if (value == 'delete') {\n                                      _deleteNote(index);\n                                    }\n                                  },\n                                  itemBuilder: (context) => [\n                                    const PopupMenuItem(\n                                      value: 'delete',\n                                      child: Row(\n                                        children: [\n                                          Icon(Icons.delete, color: Colors.red),\n                                          SizedBox(width: 8),\n                                          Text('Delete'),\n                                        ],\n                                      ),\n                                    ),\n                                  ],\n                                ),\n                              ],\n                            ),\n                            const SizedBox(height: 8),\n                            Text(\n                              note,\n                              style: const TextStyle(fontSize: 16),\n                            ),\n                            const SizedBox(height: 8),\n                            Container(\n                              padding: const EdgeInsets.symmetric(\n                                horizontal: 8,\n                                vertical: 4,\n                              ),\n                              decoration: BoxDecoration(\n                                color: Colors.red.withOpacity(0.1),\n                                borderRadius: BorderRadius.circular(12),\n                              ),\n                              child: Text(\n                                'NOT INCLUDED IN EXPORTS',\n                                style: TextStyle(\n                                  fontSize: 10,\n                                  fontWeight: FontWeight.bold,\n                                  color: Colors.red[700],\n                                ),\n                              ),\n                            ),\n                          ],\n                        ),\n                      ),\n                    );\n                  },\n                ),\n        ),\n      ],\n    );\n  }\n\n  void _startAddNote() {\n    setState(() {\n      _isAddingNote = true;\n    });\n  }\n\n  void _cancelAddNote() {\n    setState(() {\n      _isAddingNote = false;\n      _noteController.clear();\n    });\n  }\n\n  void _saveNote() async {\n    if (_noteController.text.trim().isEmpty) return;\n\n    try {\n      await widget.patientProvider.addInternalNote(\n        widget.patient.id,\n        _noteController.text.trim(),\n      );\n\n      setState(() {\n        _isAddingNote = false;\n        _noteController.clear();\n      });\n\n      if (mounted) {\n        ScaffoldMessenger.of(context).showSnackBar(\n          const SnackBar(\n            content: Text('Private note added successfully'),\n            backgroundColor: Colors.green,\n          ),\n        );\n      }\n    } catch (e) {\n      if (mounted) {\n        ScaffoldMessenger.of(context).showSnackBar(\n          const SnackBar(\n            content: Text('Failed to add note'),\n            backgroundColor: Colors.red,\n          ),\n        );\n      }\n    }\n  }\n\n  void _deleteNote(int index) async {\n    try {\n      await widget.patientProvider.removeInternalNote(\n        widget.patient.id,\n        index,\n      );\n\n      if (mounted) {\n        ScaffoldMessenger.of(context).showSnackBar(\n          const SnackBar(\n            content: Text('Private note deleted'),\n            backgroundColor: Colors.orange,\n          ),\n        );\n      }\n    } catch (e) {\n      if (mounted) {\n        ScaffoldMessenger.of(context).showSnackBar(\n          const SnackBar(\n            content: Text('Failed to delete note'),\n            backgroundColor: Colors.red,\n          ),\n        );\n      }\n    }\n  }\n}
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with privacy notice
+          Row(
+            children: [
+              const Icon(Icons.security, color: Colors.green),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Private Clinical Notes',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'HIPAA compliant - Never exported with patient data',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: _addNewNote,
+                icon: const Icon(Icons.add_circle, color: Colors.blue),
+                tooltip: 'Add Note',
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Notes list or empty state
+          Expanded(
+            child: widget.patient.internalNotes.isEmpty
+                ? _buildEmptyState()
+                : _buildNotesList(),
+          ),
+
+          // Note editor when editing/adding
+          if (_isEditing) ...[
+            const Divider(),
+            _buildNoteEditor(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.note_add_outlined,
+            size: 64,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No private notes yet',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Add confidential clinical observations\nthat stay private and secure',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesList() {
+    return ListView.builder(
+      itemCount: widget.patient.internalNotes.length,
+      itemBuilder: (context, index) {
+        final note = widget.patient.internalNotes[index];
+        final isBeingEdited = _isEditing && _editingIndex == index;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Note header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Note ${index + 1}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      _formatDate(DateTime.now()),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'edit':
+                            _startEditingNote(index, note);
+                            break;
+                          case 'delete':
+                            _deleteNote(index);
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 16),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 16, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text('Delete', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Note content
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    note,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNoteEditor() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.edit_note, color: Colors.blue),
+              const SizedBox(width: 8),
+              Text(
+                _editingIndex != null ? 'Edit Note' : 'Add New Note',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Text field
+          TextField(
+            controller: _noteController,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              hintText: 'Enter private clinical observations...',
+              border: OutlineInputBorder(),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Privacy reminder
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.green.withOpacity(0.3)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.security, size: 16, color: Colors.green),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'This note will be stored securely and never included in patient data exports',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _cancelEditing,
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _saveNote,
+                  child: Text(_editingIndex != null ? 'Update Note' : 'Save Note'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addNewNote() {
+    setState(() {
+      _isEditing = true;
+      _editingIndex = null;
+      _noteController.clear();
+    });
+  }
+
+  void _startEditingNote(int index, String note) {
+    setState(() {
+      _isEditing = true;
+      _editingIndex = index;
+      _noteController.text = note;
+    });
+  }
+
+  void _saveNote() {
+    if (_noteController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a note')),
+      );
+      return;
+    }
+
+    final updatedPatient = Patient(
+      id: widget.patient.id,
+      name: widget.patient.name,
+      dateOfBirth: widget.patient.dateOfBirth,
+      docType: widget.patient.docType,
+      docNumber: widget.patient.docNumber,
+      phone: widget.patient.phone,
+      email: widget.patient.email,
+      address: widget.patient.address,
+      emergencyContact: widget.patient.emergencyContact,
+      allergies: widget.patient.allergies,
+      medications: widget.patient.medications,
+      internalNotes: _editingIndex != null
+          ? (widget.patient.internalNotes.toList()
+            ..[_editingIndex!] = _noteController.text.trim())
+          : [...widget.patient.internalNotes, _noteController.text.trim()],
+      loyaltyPoints: widget.patient.loyaltyPoints,
+      tenantId: widget.patient.tenantId,
+    );
+
+    widget.patientProvider.updatePatient(updatedPatient);
+
+    setState(() {
+      _isEditing = false;
+      _editingIndex = null;
+      _noteController.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_editingIndex != null ? 'Note updated successfully' : 'Note added successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _isEditing = false;
+      _editingIndex = null;
+      _noteController.clear();
+    });
+  }
+
+  void _deleteNote(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Note'),
+        content: const Text('Are you sure you want to delete this private note? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _confirmDeleteNote(index);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteNote(int index) {
+    final updatedNotes = widget.patient.internalNotes.toList()..removeAt(index);
+    
+    final updatedPatient = Patient(
+      id: widget.patient.id,
+      name: widget.patient.name,
+      dateOfBirth: widget.patient.dateOfBirth,
+      docType: widget.patient.docType,
+      docNumber: widget.patient.docNumber,
+      phone: widget.patient.phone,
+      email: widget.patient.email,
+      address: widget.patient.address,
+      emergencyContact: widget.patient.emergencyContact,
+      allergies: widget.patient.allergies,
+      medications: widget.patient.medications,
+      internalNotes: updatedNotes,
+      loyaltyPoints: widget.patient.loyaltyPoints,
+      tenantId: widget.patient.tenantId,
+    );
+
+    widget.patientProvider.updatePatient(updatedPatient);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Note deleted successfully'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+}

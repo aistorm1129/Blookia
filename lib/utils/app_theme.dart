@@ -45,7 +45,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceLight,
         elevation: 2,
         shadowColor: Colors.black.withOpacity(0.1),
@@ -142,7 +142,7 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surfaceDark,
         elevation: 4,
         shadowColor: Colors.black.withOpacity(0.3),

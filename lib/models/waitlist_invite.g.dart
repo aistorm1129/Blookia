@@ -1,50 +1,53 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'tenant.dart';
+part of 'waitlist_invite.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TenantAdapter extends TypeAdapter<Tenant> {
+class WaitlistInviteAdapter extends TypeAdapter<WaitlistInvite> {
   @override
-  final int typeId = 0;
+  final int typeId = 8;
 
   @override
-  Tenant read(BinaryReader reader) {
+  WaitlistInvite read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Tenant(
+    return WaitlistInvite(
       id: fields[0] as String,
-      name: fields[1] as String,
-      country: fields[2] as String,
-      logoUrl: fields[3] as String?,
-      address: fields[4] as String?,
-      phone: fields[5] as String?,
-      createdAt: fields[6] as DateTime,
+      appointmentId: fields[1] as String,
+      patientId: fields[2] as String,
+      expiresAt: fields[3] as DateTime,
+      accepted: fields[4] as bool,
+      createdAt: fields[5] as DateTime,
+      respondedAt: fields[6] as DateTime?,
+      loyaltyPointsAwarded: fields[7] as int,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Tenant obj) {
+  void write(BinaryWriter writer, WaitlistInvite obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.name)
+      ..write(obj.appointmentId)
       ..writeByte(2)
-      ..write(obj.country)
+      ..write(obj.patientId)
       ..writeByte(3)
-      ..write(obj.logoUrl)
+      ..write(obj.expiresAt)
       ..writeByte(4)
-      ..write(obj.address)
+      ..write(obj.accepted)
       ..writeByte(5)
-      ..write(obj.phone)
+      ..write(obj.createdAt)
       ..writeByte(6)
-      ..write(obj.createdAt);
+      ..write(obj.respondedAt)
+      ..writeByte(7)
+      ..write(obj.loyaltyPointsAwarded);
   }
 
   @override
@@ -53,7 +56,7 @@ class TenantAdapter extends TypeAdapter<Tenant> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TenantAdapter &&
+      other is WaitlistInviteAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -28,11 +28,401 @@ class _AutoMessagesScreenState extends State<AutoMessagesScreen> {
       'es': 'Recordatorio: Tienes una cita mañana a las {time} con Dr. {professionalName}. Responde CONFIRMAR para confirmar o CANCELAR para reprogramar.',
     },
     MessageKind.thankyou: {
-      'en': 'Thank you for visiting {clinicName} today, {patientName}! We hope you\\'re happy with your treatment. Your next appointment is scheduled for {nextDate}.',
+      'en': 'Thank you for visiting {clinicName} today, {patientName}! We hope you\'re happy with your treatment. Your next appointment is scheduled for {nextDate}.',
       'pt': 'Obrigado por visitar a {clinicName} hoje, {patientName}! Esperamos que esteja satisfeito(a) com seu tratamento. Seu próximo agendamento é em {nextDate}.',
       'es': '¡Gracias por visitar {clinicName} hoy, {patientName}! Esperamos que estés feliz con tu tratamiento. Tu próxima cita está programada para {nextDate}.',
     },
     MessageKind.cancel: {
       'en': 'Your appointment on {date} at {time} has been cancelled. We apologize for any inconvenience. Please call us to reschedule: {phone}.',
       'pt': 'Seu agendamento do dia {date} às {time} foi cancelado. Pedimos desculpas pelo inconveniente. Ligue para reagendar: {phone}.',
-      'es': 'Tu cita del {date} a las {time} ha sido cancelada. Nos disculpamos por las molestias. Llámanos para reprogramar: {phone}.',\n    },\n    MessageKind.rebook: {\n      'en': 'We have an available slot on {date} at {time}. Would you like to book this appointment? Reply YES to confirm or NO to decline.',\n      'pt': 'Temos um horário disponível no dia {date} às {time}. Gostaria de agendar? Responda SIM para confirmar ou NÃO para recusar.',\n      'es': 'Tenemos un horario disponible el {date} a las {time}. ¿Te gustaría reservar esta cita? Responde SÍ para confirmar o NO para declinar.',\n    },\n  };\n\n  @override\n  Widget build(BuildContext context) {\n    return Consumer<SettingsProvider>(\n      builder: (context, settings, _) {\n        return Scaffold(\n          appBar: AppBar(\n            title: const Text('Auto Messages'),\n            actions: [\n              TextButton(\n                onPressed: () => _sendMessage(context),\n                child: const Text('SEND'),\n              ),\n            ],\n          ),\n          body: Column(\n            children: [\n              // Controls Header\n              Container(\n                padding: const EdgeInsets.all(16),\n                decoration: BoxDecoration(\n                  color: Theme.of(context).cardColor,\n                  boxShadow: [\n                    BoxShadow(\n                      color: Colors.black.withOpacity(0.1),\n                      blurRadius: 4,\n                      offset: const Offset(0, 2),\n                    ),\n                  ],\n                ),\n                child: Column(\n                  crossAxisAlignment: CrossAxisAlignment.start,\n                  children: [\n                    const Text(\n                      'Message Configuration',\n                      style: TextStyle(\n                        fontSize: 18,\n                        fontWeight: FontWeight.bold,\n                      ),\n                    ),\n                    const SizedBox(height: 16),\n                    \n                    // Template Type Selection\n                    Row(\n                      children: [\n                        const Icon(Icons.message, color: Colors.blue),\n                        const SizedBox(width: 8),\n                        const Text('Template:', style: TextStyle(fontWeight: FontWeight.w500)),\n                        const SizedBox(width: 12),\n                        Expanded(\n                          child: DropdownButton<MessageKind>(\n                            value: _selectedTemplate,\n                            isExpanded: true,\n                            onChanged: (value) {\n                              setState(() {\n                                _selectedTemplate = value!;\n                              });\n                            },\n                            items: MessageKind.values.map((kind) {\n                              return DropdownMenuItem(\n                                value: kind,\n                                child: Text(_getTemplateDisplayName(kind)),\n                              );\n                            }).toList(),\n                          ),\n                        ),\n                      ],\n                    ),\n                    \n                    const SizedBox(height: 12),\n                    \n                    // Language Selection\n                    Row(\n                      children: [\n                        const Icon(Icons.language, color: Colors.green),\n                        const SizedBox(width: 8),\n                        const Text('Language:', style: TextStyle(fontWeight: FontWeight.w500)),\n                        const SizedBox(width: 12),\n                        Expanded(\n                          child: DropdownButton<String>(\n                            value: _selectedLocale,\n                            isExpanded: true,\n                            onChanged: (value) {\n                              setState(() {\n                                _selectedLocale = value!;\n                              });\n                            },\n                            items: settings.localeDisplayNames.entries.map((entry) {\n                              return DropdownMenuItem(\n                                value: entry.key,\n                                child: Text(entry.value),\n                              );\n                            }).toList(),\n                          ),\n                        ),\n                      ],\n                    ),\n                    \n                    const SizedBox(height: 12),\n                    \n                    // Confirm Attendance Toggle\n                    if (_selectedTemplate == MessageKind.confirm)\n                      Row(\n                        children: [\n                          const Icon(Icons.check_circle, color: Colors.orange),\n                          const SizedBox(width: 8),\n                          const Text('Confirm Attendance:', style: TextStyle(fontWeight: FontWeight.w500)),\n                          const Spacer(),\n                          Switch(\n                            value: _confirmAttendance,\n                            onChanged: (value) {\n                              setState(() {\n                                _confirmAttendance = value;\n                              });\n                            },\n                          ),\n                        ],\n                      ),\n                  ],\n                ),\n              ),\n              \n              // Message Preview\n              Expanded(\n                child: Padding(\n                  padding: const EdgeInsets.all(16),\n                  child: Column(\n                    crossAxisAlignment: CrossAxisAlignment.start,\n                    children: [\n                      const Text(\n                        'Message Preview',\n                        style: TextStyle(\n                          fontSize: 18,\n                          fontWeight: FontWeight.bold,\n                        ),\n                      ),\n                      const SizedBox(height: 16),\n                      \n                      // Preview Card\n                      Expanded(\n                        child: Container(\n                          width: double.infinity,\n                          padding: const EdgeInsets.all(20),\n                          decoration: BoxDecoration(\n                            color: Theme.of(context).cardColor,\n                            borderRadius: BorderRadius.circular(12),\n                            border: Border.all(\n                              color: Theme.of(context).primaryColor.withOpacity(0.3),\n                            ),\n                          ),\n                          child: Column(\n                            crossAxisAlignment: CrossAxisAlignment.start,\n                            children: [\n                              // Message Header\n                              Row(\n                                children: [\n                                  Container(\n                                    width: 40,\n                                    height: 40,\n                                    decoration: BoxDecoration(\n                                      color: Theme.of(context).primaryColor,\n                                      borderRadius: BorderRadius.circular(20),\n                                    ),\n                                    child: const Icon(\n                                      Icons.medical_services,\n                                      color: Colors.white,\n                                      size: 20,\n                                    ),\n                                  ),\n                                  const SizedBox(width: 12),\n                                  Column(\n                                    crossAxisAlignment: CrossAxisAlignment.start,\n                                    children: [\n                                      const Text(\n                                        'Blookia Clinic',\n                                        style: TextStyle(\n                                          fontWeight: FontWeight.bold,\n                                          fontSize: 16,\n                                        ),\n                                      ),\n                                      Text(\n                                        'now',\n                                        style: TextStyle(\n                                          color: Colors.grey[600],\n                                          fontSize: 12,\n                                        ),\n                                      ),\n                                    ],\n                                  ),\n                                  const Spacer(),\n                                  Icon(\n                                    _getChannelIcon(),\n                                    color: _getChannelColor(),\n                                  ),\n                                ],\n                              ),\n                              \n                              const SizedBox(height: 20),\n                              \n                              // Message Content\n                              Expanded(\n                                child: Container(\n                                  width: double.infinity,\n                                  padding: const EdgeInsets.all(16),\n                                  decoration: BoxDecoration(\n                                    color: Colors.blue.withOpacity(0.1),\n                                    borderRadius: BorderRadius.circular(12),\n                                  ),\n                                  child: SingleChildScrollView(\n                                    child: Text(\n                                      _getPreviewText(),\n                                      style: const TextStyle(\n                                        fontSize: 16,\n                                        height: 1.5,\n                                      ),\n                                    ),\n                                  ),\n                                ),\n                              ),\n                              \n                              const SizedBox(height: 16),\n                              \n                              // Channel Indicators\n                              Wrap(\n                                spacing: 8,\n                                children: [\n                                  _buildChannelChip('WhatsApp', Icons.chat, Colors.green),\n                                  _buildChannelChip('SMS', Icons.sms, Colors.blue),\n                                  _buildChannelChip('Email', Icons.email, Colors.orange),\n                                  _buildChannelChip('Instagram', Icons.camera_alt, Colors.purple),\n                                  _buildChannelChip('Telegram', Icons.telegram, Colors.cyan),\n                                ],\n                              ),\n                            ],\n                          ),\n                        ),\n                      ),\n                      \n                      const SizedBox(height: 16),\n                      \n                      // Send Button\n                      SizedBox(\n                        width: double.infinity,\n                        child: ElevatedButton.icon(\n                          onPressed: () => _sendMessage(context),\n                          icon: const Icon(Icons.send),\n                          label: const Text('Send Message'),\n                          style: ElevatedButton.styleFrom(\n                            padding: const EdgeInsets.symmetric(vertical: 16),\n                          ),\n                        ),\n                      ),\n                    ],\n                  ),\n                ),\n              ),\n            ],\n          ),\n        );\n      },\n    );\n  }\n\n  Widget _buildChannelChip(String label, IconData icon, Color color) {\n    return Chip(\n      avatar: Icon(icon, size: 16, color: Colors.white),\n      label: Text(\n        label,\n        style: const TextStyle(\n          color: Colors.white,\n          fontSize: 12,\n          fontWeight: FontWeight.w500,\n        ),\n      ),\n      backgroundColor: color,\n    );\n  }\n\n  String _getTemplateDisplayName(MessageKind kind) {\n    switch (kind) {\n      case MessageKind.confirm:\n        return 'Confirmation';\n      case MessageKind.reminder:\n        return 'Reminder';\n      case MessageKind.thankyou:\n        return 'Thank You';\n      case MessageKind.cancel:\n        return 'Cancellation';\n      case MessageKind.rebook:\n        return 'Rebook Offer';\n    }\n  }\n\n  String _getPreviewText() {\n    final template = _templates[_selectedTemplate]?[_selectedLocale] ?? '';\n    \n    // Replace placeholders with example data\n    return template\n        .replaceAll('{patientName}', 'Sofia Rodriguez')\n        .replaceAll('{date}', 'Monday, March 15th')\n        .replaceAll('{time}', '2:30 PM')\n        .replaceAll('{clinicName}', 'Blookia Aesthetic Clinic')\n        .replaceAll('{professionalName}', 'Dr. Ana Silva')\n        .replaceAll('{phone}', '+55 11 9999-0001')\n        .replaceAll('{nextDate}', 'April 15th');\n  }\n\n  IconData _getChannelIcon() {\n    switch (_selectedTemplate) {\n      case MessageKind.confirm:\n        return Icons.check_circle;\n      case MessageKind.reminder:\n        return Icons.alarm;\n      case MessageKind.thankyou:\n        return Icons.favorite;\n      case MessageKind.cancel:\n        return Icons.cancel;\n      case MessageKind.rebook:\n        return Icons.event_available;\n    }\n  }\n\n  Color _getChannelColor() {\n    switch (_selectedTemplate) {\n      case MessageKind.confirm:\n        return Colors.green;\n      case MessageKind.reminder:\n        return Colors.orange;\n      case MessageKind.thankyou:\n        return Colors.pink;\n      case MessageKind.cancel:\n        return Colors.red;\n      case MessageKind.rebook:\n        return Colors.blue;\n    }\n  }\n\n  void _sendMessage(BuildContext context) {\n    // Mock sending message\n    showDialog(\n      context: context,\n      builder: (context) => AlertDialog(\n        title: const Text('Message Sent'),\n        content: Column(\n          mainAxisSize: MainAxisSize.min,\n          children: [\n            Icon(\n              Icons.check_circle,\n              color: Colors.green,\n              size: 48,\n            ),\n            const SizedBox(height: 16),\n            Text(\n              'Your ${_getTemplateDisplayName(_selectedTemplate).toLowerCase()} message has been sent successfully!',\n              textAlign: TextAlign.center,\n            ),\n            const SizedBox(height: 12),\n            Container(\n              padding: const EdgeInsets.all(8),\n              decoration: BoxDecoration(\n                color: Colors.grey.withOpacity(0.1),\n                borderRadius: BorderRadius.circular(8),\n              ),\n              child: Text(\n                'Channels: WhatsApp, SMS, Email',\n                style: TextStyle(\n                  fontSize: 12,\n                  color: Colors.grey[600],\n                ),\n              ),\n            ),\n          ],\n        ),\n        actions: [\n          TextButton(\n            onPressed: () => Navigator.of(context).pop(),\n            child: const Text('OK'),\n          ),\n        ],\n      ),\n    );\n  }\n}
+      'es': 'Tu cita del {date} a las {time} ha sido cancelada. Nos disculpamos por las molestias. Llámanos para reprogramar: {phone}.',
+    },
+    MessageKind.rebook: {
+      'en': 'We have an available slot on {date} at {time}. Would you like to book this appointment? Reply YES to confirm or NO to decline.',
+      'pt': 'Temos um horário disponível no dia {date} às {time}. Gostaria de agendar? Responda SIM para confirmar ou NÃO para recusar.',
+      'es': 'Tenemos un horario disponible el {date} a las {time}. ¿Te gustaría reservar esta cita? Responde SÍ para confirmar o NO para declinar.',
+    },
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, _) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Auto Messages'),
+            actions: [
+              TextButton(
+                onPressed: () => _sendMessage(context),
+                child: const Text('SEND'),
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Controls Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Message Configuration',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Template Type Selection
+                    Row(
+                      children: [
+                        const Icon(Icons.message, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        const Text('Template:', style: TextStyle(fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButton<MessageKind>(
+                            value: _selectedTemplate,
+                            isExpanded: true,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedTemplate = value!;
+                              });
+                            },
+                            items: MessageKind.values.map((kind) {
+                              return DropdownMenuItem(
+                                value: kind,
+                                child: Text(_getTemplateDisplayName(kind)),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Language Selection
+                    Row(
+                      children: [
+                        const Icon(Icons.language, color: Colors.green),
+                        const SizedBox(width: 8),
+                        const Text('Language:', style: TextStyle(fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButton<String>(
+                            value: _selectedLocale,
+                            isExpanded: true,
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedLocale = value!;
+                              });
+                            },
+                            items: settings.localeDisplayNames.entries.map((entry) {
+                              return DropdownMenuItem(
+                                value: entry.key,
+                                child: Text(entry.value),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Confirm Attendance Toggle
+                    if (_selectedTemplate == MessageKind.confirm)
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          const Text('Confirm Attendance:', style: TextStyle(fontWeight: FontWeight.w500)),
+                          const Spacer(),
+                          Switch(
+                            value: _confirmAttendance,
+                            onChanged: (value) {
+                              setState(() {
+                                _confirmAttendance = value;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              
+              // Message Preview
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Message Preview',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Preview Card
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(context).primaryColor.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Message Header
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).primaryColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(
+                                      Icons.medical_services,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Blookia Clinic',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        'now',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Icon(
+                                    _getChannelIcon(),
+                                    color: _getChannelColor(),
+                                  ),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 20),
+                              
+                              // Message Content
+                              Expanded(
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: SingleChildScrollView(
+                                    child: Text(
+                                      _getPreviewText(),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 16),
+                              
+                              // Channel Indicators
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  _buildChannelChip('WhatsApp', Icons.chat, Colors.green),
+                                  _buildChannelChip('SMS', Icons.sms, Colors.blue),
+                                  _buildChannelChip('Email', Icons.email, Colors.orange),
+                                  _buildChannelChip('Instagram', Icons.camera_alt, Colors.purple),
+                                  _buildChannelChip('Telegram', Icons.telegram, Colors.cyan),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Send Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _sendMessage(context),
+                          icon: const Icon(Icons.send),
+                          label: const Text('Send Message'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildChannelChip(String label, IconData icon, Color color) {
+    return Chip(
+      avatar: Icon(icon, size: 16, color: Colors.white),
+      label: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      backgroundColor: color,
+    );
+  }
+
+  String _getTemplateDisplayName(MessageKind kind) {
+    switch (kind) {
+      case MessageKind.confirm:
+        return 'Confirmation';
+      case MessageKind.reminder:
+        return 'Reminder';
+      case MessageKind.thankyou:
+        return 'Thank You';
+      case MessageKind.cancel:
+        return 'Cancellation';
+      case MessageKind.rebook:
+        return 'Rebook Offer';
+    }
+  }
+
+  String _getPreviewText() {
+    final template = _templates[_selectedTemplate]?[_selectedLocale] ?? '';
+    
+    // Replace placeholders with example data
+    return template
+        .replaceAll('{patientName}', 'Sofia Rodriguez')
+        .replaceAll('{date}', 'Monday, March 15th')
+        .replaceAll('{time}', '2:30 PM')
+        .replaceAll('{clinicName}', 'Blookia Aesthetic Clinic')
+        .replaceAll('{professionalName}', 'Dr. Ana Silva')
+        .replaceAll('{phone}', '+55 11 9999-0001')
+        .replaceAll('{nextDate}', 'April 15th');
+  }
+
+  IconData _getChannelIcon() {
+    switch (_selectedTemplate) {
+      case MessageKind.confirm:
+        return Icons.check_circle;
+      case MessageKind.reminder:
+        return Icons.alarm;
+      case MessageKind.thankyou:
+        return Icons.favorite;
+      case MessageKind.cancel:
+        return Icons.cancel;
+      case MessageKind.rebook:
+        return Icons.event_available;
+    }
+  }
+
+  Color _getChannelColor() {
+    switch (_selectedTemplate) {
+      case MessageKind.confirm:
+        return Colors.green;
+      case MessageKind.reminder:
+        return Colors.orange;
+      case MessageKind.thankyou:
+        return Colors.pink;
+      case MessageKind.cancel:
+        return Colors.red;
+      case MessageKind.rebook:
+        return Colors.blue;
+    }
+  }
+
+  void _sendMessage(BuildContext context) {
+    // Mock sending message
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Message Sent'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your ${_getTemplateDisplayName(_selectedTemplate).toLowerCase()} message has been sent successfully!',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Channels: WhatsApp, SMS, Email',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -24,7 +24,7 @@ class PatientAdapter extends TypeAdapter<Patient> {
       phone: fields[4] as String?,
       email: fields[5] as String?,
       address: fields[6] as String?,
-      socials: fields[7] as Map<String, String>?,
+      socials: (fields[7] as Map?)?.cast<String, String>(),
       photoUrl: fields[8] as String?,
       internalNotes: (fields[9] as List).cast<String>(),
       dateOfBirth: fields[10] as DateTime?,

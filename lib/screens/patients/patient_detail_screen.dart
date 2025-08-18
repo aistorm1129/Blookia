@@ -4,7 +4,6 @@ import '../../models/patient.dart';
 import '../../providers/patient_provider.dart';
 import '../../providers/appointment_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../widgets/private_notes_section.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   final Patient patient;
@@ -40,23 +39,18 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
   Widget build(BuildContext context) {
     return Consumer3<PatientProvider, AppointmentProvider, SettingsProvider>(
       builder: (context, patientProvider, appointmentProvider, settings, _) {
-        // Get updated patient data
-        final updatedPatient = patientProvider.getPatientById(_currentPatient.id);
-        if (updatedPatient != null) {
-          _currentPatient = updatedPatient;
-        }
-
         return Scaffold(
           appBar: AppBar(
             title: Text(_currentPatient.name),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _editPatient(),
-              ),
               PopupMenuButton<String>(
                 onSelected: (value) {
                   switch (value) {
+                    case 'edit':
+                      _editPatient();
+                      break;
                     case 'export':
                       _exportPatientData();
                       break;
@@ -66,6 +60,16 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit),
+                        SizedBox(width: 8),
+                        Text('Edit Patient'),
+                      ],
+                    ),
+                  ),
                   const PopupMenuItem(
                     value: 'export',
                     child: Row(
@@ -85,4 +89,456 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
                         Text('Schedule Appointment'),
                       ],
                     ),
-                  ),\n                ],\n              ),\n            ],\n          ),\n          body: Column(\n            children: [\n              // Patient Header\n              Container(\n                width: double.infinity,\n                padding: const EdgeInsets.all(20),\n                decoration: BoxDecoration(\n                  gradient: LinearGradient(\n                    colors: [\n                      Theme.of(context).primaryColor,\n                      Theme.of(context).primaryColor.withOpacity(0.8),\n                    ],\n                  ),\n                ),\n                child: Column(\n                  children: [\n                    // Avatar\n                    Container(\n                      width: 80,\n                      height: 80,\n                      decoration: BoxDecoration(\n                        color: Colors.white,\n                        borderRadius: BorderRadius.circular(40),\n                        boxShadow: [\n                          BoxShadow(\n                            color: Colors.black.withOpacity(0.2),\n                            blurRadius: 10,\n                            offset: const Offset(0, 4),\n                          ),\n                        ],\n                      ),\n                      child: Center(\n                        child: Text(\n                          _getInitials(_currentPatient.name),\n                          style: TextStyle(\n                            fontSize: 28,\n                            fontWeight: FontWeight.bold,\n                            color: Theme.of(context).primaryColor,\n                          ),\n                        ),\n                      ),\n                    ),\n                    \n                    const SizedBox(height: 12),\n                    \n                    // Name and Status\n                    Text(\n                      _currentPatient.name,\n                      style: const TextStyle(\n                        fontSize: 24,\n                        fontWeight: FontWeight.bold,\n                        color: Colors.white,\n                      ),\n                    ),\n                    \n                    const SizedBox(height: 8),\n                    \n                    // Quick Stats\n                    Row(\n                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,\n                      children: [\n                        _buildStatChip(\n                          Icons.star,\n                          '${_currentPatient.loyaltyPoints} pts',\n                          Colors.amber,\n                        ),\n                        if (_currentPatient.allergies.isNotEmpty)\n                          _buildStatChip(\n                            Icons.warning,\n                            'Allergies',\n                            Colors.red,\n                          ),\n                        if (_currentPatient.internalNotes.isNotEmpty)\n                          _buildStatChip(\n                            Icons.note,\n                            '${_currentPatient.internalNotes.length} notes',\n                            Colors.orange,\n                          ),\n                      ],\n                    ),\n                  ],\n                ),\n              ),\n              \n              // Tab Bar\n              TabBar(\n                controller: _tabController,\n                tabs: const [\n                  Tab(text: 'Profile', icon: Icon(Icons.person)),\n                  Tab(text: 'Timeline', icon: Icon(Icons.history)),\n                  Tab(text: 'Payments', icon: Icon(Icons.payment)),\n                  Tab(text: 'Notes', icon: Icon(Icons.note)),\n                ],\n              ),\n              \n              // Tab Content\n              Expanded(\n                child: TabBarView(\n                  controller: _tabController,\n                  children: [\n                    _buildProfileTab(),\n                    _buildTimelineTab(appointmentProvider),\n                    _buildPaymentsTab(),\n                    _buildNotesTab(patientProvider),\n                  ],\n                ),\n              ),\n            ],\n          ),\n        );\n      },\n    );\n  }\n\n  Widget _buildStatChip(IconData icon, String label, Color color) {\n    return Container(\n      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),\n      decoration: BoxDecoration(\n        color: Colors.white.withOpacity(0.2),\n        borderRadius: BorderRadius.circular(20),\n      ),\n      child: Row(\n        mainAxisSize: MainAxisSize.min,\n        children: [\n          Icon(icon, size: 16, color: color),\n          const SizedBox(width: 4),\n          Text(\n            label,\n            style: const TextStyle(\n              fontSize: 12,\n              color: Colors.white,\n              fontWeight: FontWeight.w600,\n            ),\n          ),\n        ],\n      ),\n    );\n  }\n\n  Widget _buildProfileTab() {\n    return SingleChildScrollView(\n      padding: const EdgeInsets.all(16),\n      child: Column(\n        children: [\n          _buildInfoCard(\n            'Personal Information',\n            [\n              _buildInfoRow('Full Name', _currentPatient.name),\n              _buildInfoRow('Document Type', _currentPatient.docType),\n              _buildInfoRow('Document Number', _currentPatient.docNumber),\n              if (_currentPatient.dateOfBirth != null)\n                _buildInfoRow(\n                  'Date of Birth',\n                  _formatDate(_currentPatient.dateOfBirth!),\n                ),\n            ],\n          ),\n          \n          const SizedBox(height: 16),\n          \n          _buildInfoCard(\n            'Contact Information',\n            [\n              if (_currentPatient.phone != null)\n                _buildInfoRow('Phone', _currentPatient.phone!),\n              if (_currentPatient.email != null)\n                _buildInfoRow('Email', _currentPatient.email!),\n              if (_currentPatient.address != null)\n                _buildInfoRow('Address', _currentPatient.address!),\n              if (_currentPatient.emergencyContact != null)\n                _buildInfoRow('Emergency Contact', _currentPatient.emergencyContact!),\n            ],\n          ),\n          \n          const SizedBox(height: 16),\n          \n          if (_currentPatient.allergies.isNotEmpty) ..[\n            _buildInfoCard(\n              'Allergies & Medical Info',\n              [\n                _buildChipRow('Allergies', _currentPatient.allergies, Colors.red),\n                if (_currentPatient.medications.isNotEmpty)\n                  _buildChipRow('Medications', _currentPatient.medications, Colors.blue),\n              ],\n            ),\n          ],\n        ],\n      ),\n    );\n  }\n\n  Widget _buildTimelineTab(AppointmentProvider appointmentProvider) {\n    final appointments = appointmentProvider.getAppointmentsForPatient(_currentPatient.id);\n    \n    return appointments.isEmpty\n        ? const Center(\n            child: Column(\n              mainAxisAlignment: MainAxisAlignment.center,\n              children: [\n                Icon(Icons.event_busy, size: 64, color: Colors.grey),\n                SizedBox(height: 16),\n                Text('No appointments found', style: TextStyle(fontSize: 18, color: Colors.grey)),\n              ],\n            ),\n          )\n        : ListView.builder(\n            padding: const EdgeInsets.all(16),\n            itemCount: appointments.length,\n            itemBuilder: (context, index) {\n              final appointment = appointments[index];\n              return Card(\n                margin: const EdgeInsets.only(bottom: 12),\n                child: ListTile(\n                  leading: Container(\n                    width: 40,\n                    height: 40,\n                    decoration: BoxDecoration(\n                      color: _getStatusColor(appointment.status),\n                      borderRadius: BorderRadius.circular(20),\n                    ),\n                    child: Icon(\n                      _getStatusIcon(appointment.status),\n                      color: Colors.white,\n                      size: 20,\n                    ),\n                  ),\n                  title: Text(_formatDate(appointment.start)),\n                  subtitle: Text('${appointment.type.name} - ${appointment.status.name}'),\n                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),\n                ),\n              );\n            },\n          );\n  }\n\n  Widget _buildPaymentsTab() {\n    return const Center(\n      child: Column(\n        mainAxisAlignment: MainAxisAlignment.center,\n        children: [\n          Icon(Icons.payment, size: 64, color: Colors.grey),\n          SizedBox(height: 16),\n          Text('Payment history', style: TextStyle(fontSize: 18, color: Colors.grey)),\n          SizedBox(height: 8),\n          Text('Feature coming soon...', style: TextStyle(color: Colors.grey)),\n        ],\n      ),\n    );\n  }\n\n  Widget _buildNotesTab(PatientProvider patientProvider) {\n    return PrivateNotesSection(\n      patient: _currentPatient,\n      patientProvider: patientProvider,\n    );\n  }\n\n  Widget _buildInfoCard(String title, List<Widget> children) {\n    return Card(\n      child: Padding(\n        padding: const EdgeInsets.all(16),\n        child: Column(\n          crossAxisAlignment: CrossAxisAlignment.start,\n          children: [\n            Text(\n              title,\n              style: const TextStyle(\n                fontSize: 18,\n                fontWeight: FontWeight.bold,\n              ),\n            ),\n            const SizedBox(height: 12),\n            ...children,\n          ],\n        ),\n      ),\n    );\n  }\n\n  Widget _buildInfoRow(String label, String value) {\n    return Padding(\n      padding: const EdgeInsets.only(bottom: 8),\n      child: Row(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        children: [\n          SizedBox(\n            width: 120,\n            child: Text(\n              label,\n              style: const TextStyle(\n                fontWeight: FontWeight.w500,\n                color: Colors.grey,\n              ),\n            ),\n          ),\n          Expanded(\n            child: Text(\n              value,\n              style: const TextStyle(fontSize: 16),\n            ),\n          ),\n        ],\n      ),\n    );\n  }\n\n  Widget _buildChipRow(String label, List<String> items, Color color) {\n    return Padding(\n      padding: const EdgeInsets.only(bottom: 12),\n      child: Column(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        children: [\n          Text(\n            label,\n            style: const TextStyle(\n              fontWeight: FontWeight.w500,\n              color: Colors.grey,\n            ),\n          ),\n          const SizedBox(height: 8),\n          Wrap(\n            spacing: 8,\n            runSpacing: 4,\n            children: items.map((item) => Chip(\n              label: Text(\n                item,\n                style: const TextStyle(\n                  fontSize: 12,\n                  color: Colors.white,\n                ),\n              ),\n              backgroundColor: color,\n            )).toList(),\n          ),\n        ],\n      ),\n    );\n  }\n\n  String _getInitials(String name) {\n    List<String> parts = name.split(' ');\n    if (parts.length >= 2) {\n      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();\n    }\n    return name.length >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase();\n  }\n\n  String _formatDate(DateTime date) {\n    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';\n  }\n\n  Color _getStatusColor(status) {\n    switch (status.toString()) {\n      case 'AppointmentStatus.confirmed':\n        return Colors.green;\n      case 'AppointmentStatus.waitlist':\n        return Colors.orange;\n      case 'AppointmentStatus.cancelled':\n        return Colors.red;\n      case 'AppointmentStatus.completed':\n        return Colors.blue;\n      default:\n        return Colors.grey;\n    }\n  }\n\n  IconData _getStatusIcon(status) {\n    switch (status.toString()) {\n      case 'AppointmentStatus.confirmed':\n        return Icons.check;\n      case 'AppointmentStatus.waitlist':\n        return Icons.hourglass_empty;\n      case 'AppointmentStatus.cancelled':\n        return Icons.close;\n      case 'AppointmentStatus.completed':\n        return Icons.done_all;\n      default:\n        return Icons.event;\n    }\n  }\n\n  void _editPatient() {\n    // Navigate to edit patient screen\n    ScaffoldMessenger.of(context).showSnackBar(\n      const SnackBar(content: Text('Edit patient feature coming soon...')),\n    );\n  }\n\n  void _exportPatientData() {\n    // Export patient data (excluding private notes)\n    ScaffoldMessenger.of(context).showSnackBar(\n      const SnackBar(content: Text('Patient data exported (private notes excluded)')),\n    );\n  }\n\n  void _scheduleAppointment() {\n    // Navigate to schedule appointment\n    ScaffoldMessenger.of(context).showSnackBar(\n      const SnackBar(content: Text('Schedule appointment feature coming soon...')),\n    );\n  }\n}
+                  ),
+                ],
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Patient Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withOpacity(0.8),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(40),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          _getInitials(_currentPatient.name),
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Name and Status
+                    Text(
+                      _currentPatient.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Quick Stats
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatChip(
+                          Icons.star,
+                          '${_currentPatient.loyaltyPoints} pts',
+                          Colors.amber,
+                        ),
+                        if (_currentPatient.allergies.isNotEmpty)
+                          _buildStatChip(
+                            Icons.warning,
+                            'Allergies',
+                            Colors.red,
+                          ),
+                        if (_currentPatient.internalNotes.isNotEmpty)
+                          _buildStatChip(
+                            Icons.note,
+                            '${_currentPatient.internalNotes.length} notes',
+                            Colors.orange,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Tab Bar
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: 'Profile', icon: Icon(Icons.person)),
+                  Tab(text: 'Timeline', icon: Icon(Icons.history)),
+                  Tab(text: 'Payments', icon: Icon(Icons.payment)),
+                  Tab(text: 'Notes', icon: Icon(Icons.note)),
+                ],
+              ),
+              
+              // Tab Content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildProfileTab(),
+                    _buildTimelineTab(appointmentProvider),
+                    _buildPaymentsTab(),
+                    _buildNotesTab(patientProvider),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildInfoCard(
+            'Personal Information',
+            [
+              _buildInfoRow('Full Name', _currentPatient.name),
+              _buildInfoRow('Document Type', _currentPatient.docType),
+              _buildInfoRow('Document Number', _currentPatient.docNumber),
+              if (_currentPatient.dateOfBirth != null)
+                _buildInfoRow(
+                  'Date of Birth',
+                  _formatDate(_currentPatient.dateOfBirth!),
+                ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          _buildInfoCard(
+            'Contact Information',
+            [
+              if (_currentPatient.phone != null)
+                _buildInfoRow('Phone', _currentPatient.phone!),
+              if (_currentPatient.email != null)
+                _buildInfoRow('Email', _currentPatient.email!),
+              if (_currentPatient.address != null)
+                _buildInfoRow('Address', _currentPatient.address!),
+              if (_currentPatient.emergencyContact != null)
+                _buildInfoRow('Emergency Contact', _currentPatient.emergencyContact!),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          if (_currentPatient.allergies.isNotEmpty) ...[
+            _buildInfoCard(
+              'Allergies & Medical Info',
+              [
+                _buildChipRow('Allergies', _currentPatient.allergies, Colors.red),
+                if (_currentPatient.medications.isNotEmpty)
+                  _buildChipRow('Medications', _currentPatient.medications, Colors.blue),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineTab(AppointmentProvider appointmentProvider) {
+    final appointments = appointmentProvider.getAppointmentsForPatient(_currentPatient.id);
+    
+    return appointments.isEmpty
+        ? const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event_busy, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('No appointments found', style: TextStyle(fontSize: 18, color: Colors.grey)),
+              ],
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: appointments.length,
+            itemBuilder: (context, index) {
+              final appointment = appointments[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(appointment.status),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      _getStatusIcon(appointment.status),
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(_formatDate(appointment.start)),
+                  subtitle: Text('${appointment.type.name} - ${appointment.status.name}'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                ),
+              );
+            },
+          );
+  }
+
+  Widget _buildPaymentsTab() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.payment, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text('Payment history', style: TextStyle(fontSize: 18, color: Colors.grey)),
+          SizedBox(height: 8),
+          Text('Feature coming soon...', style: TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesTab(PatientProvider patientProvider) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Private Notes',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Clinical notes are private and HIPAA compliant',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _currentPatient.internalNotes.isEmpty
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.note_add, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text('No notes yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _currentPatient.internalNotes.length,
+                    itemBuilder: (context, index) {
+                      final note = _currentPatient.internalNotes[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          title: Text(note.length > 100 ? '${note.substring(0, 100)}...' : note),
+                          subtitle: Text('Note ${index + 1}'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              // Edit note functionality
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String title, List<Widget> children) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChipRow(String label, List<String> items, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: items.map((item) => Chip(
+              label: Text(
+                item,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
+              ),
+              backgroundColor: color,
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    List<String> parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.length >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase();
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Color _getStatusColor(status) {
+    switch (status.toString()) {
+      case 'AppointmentStatus.confirmed':
+        return Colors.green;
+      case 'AppointmentStatus.waitlist':
+        return Colors.orange;
+      case 'AppointmentStatus.cancelled':
+        return Colors.red;
+      case 'AppointmentStatus.completed':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getStatusIcon(status) {
+    switch (status.toString()) {
+      case 'AppointmentStatus.confirmed':
+        return Icons.check;
+      case 'AppointmentStatus.waitlist':
+        return Icons.hourglass_empty;
+      case 'AppointmentStatus.cancelled':
+        return Icons.close;
+      case 'AppointmentStatus.completed':
+        return Icons.done_all;
+      default:
+        return Icons.event;
+    }
+  }
+
+  void _editPatient() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit patient feature coming soon...')),
+    );
+  }
+
+  void _exportPatientData() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Patient data exported (private notes excluded)')),
+    );
+  }
+
+  void _scheduleAppointment() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Schedule appointment feature coming soon...')),
+    );
+  }
+}

@@ -1,50 +1,53 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'tenant.dart';
+part of 'marker_3d.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TenantAdapter extends TypeAdapter<Tenant> {
+class Marker3DAdapter extends TypeAdapter<Marker3D> {
   @override
-  final int typeId = 0;
+  final int typeId = 11;
 
   @override
-  Tenant read(BinaryReader reader) {
+  Marker3D read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Tenant(
+    return Marker3D(
       id: fields[0] as String,
-      name: fields[1] as String,
-      country: fields[2] as String,
-      logoUrl: fields[3] as String?,
-      address: fields[4] as String?,
-      phone: fields[5] as String?,
-      createdAt: fields[6] as DateTime,
+      modelId: fields[1] as String,
+      position: (fields[2] as Map).cast<String, double>(),
+      note: fields[3] as String?,
+      createdAt: fields[4] as DateTime,
+      createdBy: fields[5] as String?,
+      color: fields[6] as String?,
+      icon: fields[7] as String?,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Tenant obj) {
+  void write(BinaryWriter writer, Marker3D obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.name)
+      ..write(obj.modelId)
       ..writeByte(2)
-      ..write(obj.country)
+      ..write(obj.position)
       ..writeByte(3)
-      ..write(obj.logoUrl)
+      ..write(obj.note)
       ..writeByte(4)
-      ..write(obj.address)
+      ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.phone)
+      ..write(obj.createdBy)
       ..writeByte(6)
-      ..write(obj.createdAt);
+      ..write(obj.color)
+      ..writeByte(7)
+      ..write(obj.icon);
   }
 
   @override
@@ -53,7 +56,7 @@ class TenantAdapter extends TypeAdapter<Tenant> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TenantAdapter &&
+      other is Marker3DAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

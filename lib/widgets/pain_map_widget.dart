@@ -35,4 +35,446 @@ class _PainMapWidgetState extends State<PainMapWidget> {
     'left_thigh': const Offset(0.4, 0.75),
     'right_thigh': const Offset(0.6, 0.75),
     'left_knee': const Offset(0.4, 0.85),
-    'right_knee': const Offset(0.6, 0.85),\n    'left_calf': const Offset(0.4, 0.92),\n    'right_calf': const Offset(0.6, 0.92),\n  };\n\n  @override\n  Widget build(BuildContext context) {\n    return Column(\n      children: [\n        // View Toggle\n        Container(\n          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),\n          child: SegmentedButton<bool>(\n            segments: const [\n              ButtonSegment(value: true, label: Text('Front View'), icon: Icon(Icons.person)),\n              ButtonSegment(value: false, label: Text('Back View'), icon: Icon(Icons.accessibility_new)),\n            ],\n            selected: {_showFrontView},\n            onSelectionChanged: (selection) {\n              setState(() {\n                _showFrontView = selection.first;\n              });\n            },\n          ),\n        ),\n        \n        // Body Diagram\n        Expanded(\n          child: Container(\n            padding: const EdgeInsets.all(16),\n            child: LayoutBuilder(\n              builder: (context, constraints) {\n                return Stack(\n                  children: [\n                    // Body Outline\n                    Center(\n                      child: Container(\n                        width: constraints.maxWidth * 0.6,\n                        height: constraints.maxHeight * 0.8,\n                        decoration: BoxDecoration(\n                          color: Colors.grey.withOpacity(0.1),\n                          borderRadius: BorderRadius.circular(20),\n                          border: Border.all(color: Colors.grey.withOpacity(0.3)),\n                        ),\n                        child: CustomPaint(\n                          painter: BodyOutlinePainter(_showFrontView),\n                          size: Size(\n                            constraints.maxWidth * 0.6,\n                            constraints.maxHeight * 0.8,\n                          ),\n                        ),\n                      ),\n                    ),\n                    \n                    // Pain Points\n                    ..._buildPainPoints(constraints),\n                    \n                    // Selected Region Info\n                    if (_selectedRegion != null)\n                      Positioned(\n                        top: 16,\n                        right: 16,\n                        child: _buildRegionInfo(),\n                      ),\n                  ],\n                );\n              },\n            ),\n          ),\n        ),\n        \n        // Pain Scale Selector\n        if (_selectedRegion != null)\n          Container(\n            padding: const EdgeInsets.all(16),\n            margin: const EdgeInsets.all(16),\n            decoration: BoxDecoration(\n              color: Theme.of(context).cardColor,\n              borderRadius: BorderRadius.circular(12),\n              boxShadow: [\n                BoxShadow(\n                  color: Colors.black.withOpacity(0.1),\n                  blurRadius: 8,\n                  offset: const Offset(0, 4),\n                ),\n              ],\n            ),\n            child: Column(\n              crossAxisAlignment: CrossAxisAlignment.start,\n              children: [\n                Text(\n                  'Pain Level for ${_getRegionDisplayName(_selectedRegion!)}',\n                  style: const TextStyle(\n                    fontSize: 16,\n                    fontWeight: FontWeight.bold,\n                  ),\n                ),\n                const SizedBox(height: 16),\n                \n                // Pain Scale Slider\n                Row(\n                  children: [\n                    const Text('0', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),\n                    Expanded(\n                      child: Slider(\n                        value: (widget.painScores[_selectedRegion] ?? 0).toDouble(),\n                        min: 0,\n                        max: 10,\n                        divisions: 10,\n                        activeColor: _getPainColor(widget.painScores[_selectedRegion] ?? 0),\n                        onChanged: (value) {\n                          widget.onScoreChanged(_selectedRegion!, value.round());\n                        },\n                      ),\n                    ),\n                    const Text('10', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),\n                  ],\n                ),\n                \n                // Pain Scale Buttons\n                const SizedBox(height: 8),\n                Wrap(\n                  spacing: 8,\n                  runSpacing: 8,\n                  children: List.generate(11, (index) {\n                    final isSelected = widget.painScores[_selectedRegion] == index;\n                    return GestureDetector(\n                      onTap: () => widget.onScoreChanged(_selectedRegion!, index),\n                      child: Container(\n                        width: 32,\n                        height: 32,\n                        decoration: BoxDecoration(\n                          color: isSelected \n                              ? _getPainColor(index)\n                              : Colors.grey.withOpacity(0.2),\n                          borderRadius: BorderRadius.circular(16),\n                          border: Border.all(\n                            color: isSelected \n                                ? _getPainColor(index)\n                                : Colors.grey.withOpacity(0.5),\n                            width: 2,\n                          ),\n                        ),\n                        child: Center(\n                          child: Text(\n                            index.toString(),\n                            style: TextStyle(\n                              color: isSelected ? Colors.white : Colors.black,\n                              fontWeight: FontWeight.bold,\n                              fontSize: 12,\n                            ),\n                          ),\n                        ),\n                      ),\n                    );\n                  }),\n                ),\n                \n                const SizedBox(height: 12),\n                \n                // Remove Score Button\n                if (widget.painScores.containsKey(_selectedRegion))\n                  SizedBox(\n                    width: double.infinity,\n                    child: OutlinedButton.icon(\n                      onPressed: () {\n                        widget.onScoreChanged(_selectedRegion!, 0);\n                        setState(() {\n                          _selectedRegion = null;\n                        });\n                      },\n                      icon: const Icon(Icons.clear, color: Colors.red),\n                      label: const Text('Remove Pain Score', style: TextStyle(color: Colors.red)),\n                      style: OutlinedButton.styleFrom(\n                        side: const BorderSide(color: Colors.red),\n                      ),\n                    ),\n                  ),\n              ],\n            ),\n          ),\n      ],\n    );\n  }\n\n  List<Widget> _buildPainPoints(BoxConstraints constraints) {\n    final bodyWidth = constraints.maxWidth * 0.6;\n    final bodyHeight = constraints.maxHeight * 0.8;\n    final centerX = constraints.maxWidth * 0.5;\n    final centerY = constraints.maxHeight * 0.4;\n    \n    return _bodyRegions.entries.map((entry) {\n      final region = entry.key;\n      final relativePosition = entry.value;\n      final score = widget.painScores[region] ?? 0;\n      \n      // Calculate absolute position\n      final x = centerX + (relativePosition.dx - 0.5) * bodyWidth;\n      final y = centerY + (relativePosition.dy - 0.5) * bodyHeight;\n      \n      return Positioned(\n        left: x - 20,\n        top: y - 20,\n        child: GestureDetector(\n          onTap: () {\n            setState(() {\n              _selectedRegion = region;\n            });\n          },\n          child: Container(\n            width: 40,\n            height: 40,\n            decoration: BoxDecoration(\n              color: score > 0 \n                  ? _getPainColor(score)\n                  : Colors.blue.withOpacity(0.3),\n              borderRadius: BorderRadius.circular(20),\n              border: Border.all(\n                color: _selectedRegion == region \n                    ? Colors.black\n                    : Colors.white,\n                width: _selectedRegion == region ? 3 : 2,\n              ),\n              boxShadow: [\n                BoxShadow(\n                  color: Colors.black.withOpacity(0.2),\n                  blurRadius: 4,\n                  offset: const Offset(0, 2),\n                ),\n              ],\n            ),\n            child: Center(\n              child: Text(\n                score > 0 ? score.toString() : '+',\n                style: const TextStyle(\n                  color: Colors.white,\n                  fontWeight: FontWeight.bold,\n                  fontSize: 14,\n                ),\n              ),\n            ),\n          ),\n        ),\n      );\n    }).toList();\n  }\n\n  Widget _buildRegionInfo() {\n    final score = widget.painScores[_selectedRegion] ?? 0;\n    return Container(\n      padding: const EdgeInsets.all(12),\n      decoration: BoxDecoration(\n        color: Theme.of(context).cardColor,\n        borderRadius: BorderRadius.circular(8),\n        boxShadow: [\n          BoxShadow(\n            color: Colors.black.withOpacity(0.1),\n            blurRadius: 8,\n            offset: const Offset(0, 2),\n          ),\n        ],\n      ),\n      child: Column(\n        crossAxisAlignment: CrossAxisAlignment.start,\n        mainAxisSize: MainAxisSize.min,\n        children: [\n          Text(\n            _getRegionDisplayName(_selectedRegion!),\n            style: const TextStyle(\n              fontWeight: FontWeight.bold,\n            ),\n          ),\n          const SizedBox(height: 4),\n          if (score > 0)\n            Row(\n              mainAxisSize: MainAxisSize.min,\n              children: [\n                Container(\n                  width: 12,\n                  height: 12,\n                  decoration: BoxDecoration(\n                    color: _getPainColor(score),\n                    borderRadius: BorderRadius.circular(6),\n                  ),\n                ),\n                const SizedBox(width: 6),\n                Text(\n                  'Pain: $score/10',\n                  style: const TextStyle(\n                    fontWeight: FontWeight.w600,\n                    fontSize: 12,\n                  ),\n                ),\n              ],\n            )\n          else\n            const Text(\n              'Tap to set pain level',\n              style: TextStyle(\n                color: Colors.grey,\n                fontSize: 12,\n              ),\n            ),\n        ],\n      ),\n    );\n  }\n\n  Color _getPainColor(int score) {\n    if (score <= 2) return Colors.green;\n    if (score <= 4) return Colors.yellow.shade700;\n    if (score <= 6) return Colors.orange;\n    if (score <= 8) return Colors.red.shade600;\n    return Colors.red.shade800;\n  }\n\n  String _getRegionDisplayName(String region) {\n    final displayNames = {\n      'head': 'Head',\n      'neck': 'Neck',\n      'left_shoulder': 'Left Shoulder',\n      'right_shoulder': 'Right Shoulder',\n      'chest': 'Chest',\n      'left_arm': 'Left Arm',\n      'right_arm': 'Right Arm',\n      'abdomen': 'Abdomen',\n      'lower_back': 'Lower Back',\n      'left_hip': 'Left Hip',\n      'right_hip': 'Right Hip',\n      'left_thigh': 'Left Thigh',\n      'right_thigh': 'Right Thigh',\n      'left_knee': 'Left Knee',\n      'right_knee': 'Right Knee',\n      'left_calf': 'Left Calf',\n      'right_calf': 'Right Calf',\n    };\n    return displayNames[region] ?? region;\n  }\n}\n\nclass BodyOutlinePainter extends CustomPainter {\n  final bool showFront;\n  \n  BodyOutlinePainter(this.showFront);\n\n  @override\n  void paint(Canvas canvas, Size size) {\n    final paint = Paint()\n      ..color = Colors.grey.withOpacity(0.5)\n      ..strokeWidth = 2\n      ..style = PaintingStyle.stroke;\n\n    final fillPaint = Paint()\n      ..color = Colors.grey.withOpacity(0.1)\n      ..style = PaintingStyle.fill;\n\n    final centerX = size.width * 0.5;\n    final path = Path();\n\n    if (showFront) {\n      // Draw simplified front body outline\n      // Head\n      canvas.drawCircle(\n        Offset(centerX, size.height * 0.15),\n        size.width * 0.08,\n        fillPaint,\n      );\n      canvas.drawCircle(\n        Offset(centerX, size.height * 0.15),\n        size.width * 0.08,\n        paint,\n      );\n      \n      // Body outline\n      path.moveTo(centerX - size.width * 0.12, size.height * 0.25); // neck\n      path.lineTo(centerX - size.width * 0.2, size.height * 0.35); // left shoulder\n      path.lineTo(centerX - size.width * 0.15, size.height * 0.7); // left side\n      path.lineTo(centerX - size.width * 0.08, size.height * 0.7); // left hip\n      path.lineTo(centerX - size.width * 0.1, size.height * 1.0); // left leg\n      path.lineTo(centerX - size.width * 0.05, size.height * 1.0); // left foot\n      path.lineTo(centerX + size.width * 0.05, size.height * 1.0); // right foot\n      path.lineTo(centerX + size.width * 0.1, size.height * 1.0); // right leg\n      path.lineTo(centerX + size.width * 0.08, size.height * 0.7); // right hip\n      path.lineTo(centerX + size.width * 0.15, size.height * 0.7); // right side\n      path.lineTo(centerX + size.width * 0.2, size.height * 0.35); // right shoulder\n      path.lineTo(centerX + size.width * 0.12, size.height * 0.25); // neck\n      path.close();\n    } else {\n      // Draw simplified back body outline (similar but slightly different)\n      // Head (back view)\n      canvas.drawCircle(\n        Offset(centerX, size.height * 0.15),\n        size.width * 0.08,\n        fillPaint,\n      );\n      canvas.drawCircle(\n        Offset(centerX, size.height * 0.15),\n        size.width * 0.08,\n        paint,\n      );\n      \n      // Back outline - similar to front\n      path.moveTo(centerX - size.width * 0.12, size.height * 0.25);\n      path.lineTo(centerX - size.width * 0.2, size.height * 0.35);\n      path.lineTo(centerX - size.width * 0.15, size.height * 0.7);\n      path.lineTo(centerX - size.width * 0.08, size.height * 0.7);\n      path.lineTo(centerX - size.width * 0.1, size.height * 1.0);\n      path.lineTo(centerX - size.width * 0.05, size.height * 1.0);\n      path.lineTo(centerX + size.width * 0.05, size.height * 1.0);\n      path.lineTo(centerX + size.width * 0.1, size.height * 1.0);\n      path.lineTo(centerX + size.width * 0.08, size.height * 0.7);\n      path.lineTo(centerX + size.width * 0.15, size.height * 0.7);\n      path.lineTo(centerX + size.width * 0.2, size.height * 0.35);\n      path.lineTo(centerX + size.width * 0.12, size.height * 0.25);\n      path.close();\n    }\n\n    canvas.drawPath(path, fillPaint);\n    canvas.drawPath(path, paint);\n\n    // Add some anatomical reference lines\n    final dashedPaint = Paint()\n      ..color = Colors.grey.withOpacity(0.3)\n      ..strokeWidth = 1;\n    \n    // Horizontal reference lines\n    canvas.drawLine(\n      Offset(centerX - size.width * 0.1, size.height * 0.35),\n      Offset(centerX + size.width * 0.1, size.height * 0.35),\n      dashedPaint,\n    );\n    canvas.drawLine(\n      Offset(centerX - size.width * 0.1, size.height * 0.55),\n      Offset(centerX + size.width * 0.1, size.height * 0.55),\n      dashedPaint,\n    );\n  }\n\n  @override\n  bool shouldRepaint(covariant CustomPainter oldDelegate) {\n    return oldDelegate != this;\n  }\n}
+    'right_knee': const Offset(0.6, 0.85),
+    'left_calf': const Offset(0.4, 0.92),
+    'right_calf': const Offset(0.6, 0.92),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // View Toggle
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: true, label: Text('Front View'), icon: Icon(Icons.person)),
+              ButtonSegment(value: false, label: Text('Back View'), icon: Icon(Icons.accessibility_new)),
+            ],
+            selected: {_showFrontView},
+            onSelectionChanged: (selection) {
+              setState(() {
+                _showFrontView = selection.first;
+              });
+            },
+          ),
+        ),
+        
+        // Body Diagram
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Stack(
+                  children: [
+                    // Body Outline
+                    Center(
+                      child: Container(
+                        width: constraints.maxWidth * 0.6,
+                        height: constraints.maxHeight * 0.8,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                        ),
+                        child: CustomPaint(
+                          painter: BodyOutlinePainter(_showFrontView),
+                          size: Size(
+                            constraints.maxWidth * 0.6,
+                            constraints.maxHeight * 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // Pain Points
+                    ..._buildPainPoints(constraints),
+                    
+                    // Selected Region Info
+                    if (_selectedRegion != null)
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: _buildRegionInfo(),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        
+        // Pain Scale Selector
+        if (_selectedRegion != null)
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pain Level for ${_getRegionDisplayName(_selectedRegion!)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Pain Scale Slider
+                Row(
+                  children: [
+                    const Text('0', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Slider(
+                        value: (widget.painScores[_selectedRegion] ?? 0).toDouble(),
+                        min: 0,
+                        max: 10,
+                        divisions: 10,
+                        activeColor: _getPainColor(widget.painScores[_selectedRegion] ?? 0),
+                        onChanged: (value) {
+                          widget.onScoreChanged(_selectedRegion!, value.round());
+                        },
+                      ),
+                    ),
+                    const Text('10', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                
+                // Pain Scale Buttons
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(11, (index) {
+                    final isSelected = widget.painScores[_selectedRegion] == index;
+                    return GestureDetector(
+                      onTap: () => widget.onScoreChanged(_selectedRegion!, index),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isSelected 
+                              ? _getPainColor(index)
+                              : Colors.grey.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected 
+                                ? _getPainColor(index)
+                                : Colors.grey.withOpacity(0.5),
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            index.toString(),
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Remove Score Button
+                if (widget.painScores.containsKey(_selectedRegion))
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        widget.onScoreChanged(_selectedRegion!, 0);
+                        setState(() {
+                          _selectedRegion = null;
+                        });
+                      },
+                      icon: const Icon(Icons.clear, color: Colors.red),
+                      label: const Text('Remove Pain Score', style: TextStyle(color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildPainPoints(BoxConstraints constraints) {
+    final bodyWidth = constraints.maxWidth * 0.6;
+    final bodyHeight = constraints.maxHeight * 0.8;
+    final centerX = constraints.maxWidth * 0.5;
+    final centerY = constraints.maxHeight * 0.4;
+    
+    return _bodyRegions.entries.map((entry) {
+      final region = entry.key;
+      final relativePosition = entry.value;
+      final score = widget.painScores[region] ?? 0;
+      
+      // Calculate absolute position
+      final x = centerX + (relativePosition.dx - 0.5) * bodyWidth;
+      final y = centerY + (relativePosition.dy - 0.5) * bodyHeight;
+      
+      return Positioned(
+        left: x - 20,
+        top: y - 20,
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedRegion = region;
+            });
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: score > 0 
+                  ? _getPainColor(score)
+                  : Colors.blue.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _selectedRegion == region 
+                    ? Colors.black
+                    : Colors.white,
+                width: _selectedRegion == region ? 3 : 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                score > 0 ? score.toString() : '+',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildRegionInfo() {
+    final score = widget.painScores[_selectedRegion] ?? 0;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _getRegionDisplayName(_selectedRegion!),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (score > 0)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: _getPainColor(score),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Pain: ${score}/10',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            )
+          else
+            const Text(
+              'Tap to set pain level',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Color _getPainColor(int score) {
+    if (score <= 2) return Colors.green;
+    if (score <= 4) return Colors.yellow.shade700;
+    if (score <= 6) return Colors.orange;
+    if (score <= 8) return Colors.red.shade600;
+    return Colors.red.shade800;
+  }
+
+  String _getRegionDisplayName(String region) {
+    final displayNames = {
+      'head': 'Head',
+      'neck': 'Neck',
+      'left_shoulder': 'Left Shoulder',
+      'right_shoulder': 'Right Shoulder',
+      'chest': 'Chest',
+      'left_arm': 'Left Arm',
+      'right_arm': 'Right Arm',
+      'abdomen': 'Abdomen',
+      'lower_back': 'Lower Back',
+      'left_hip': 'Left Hip',
+      'right_hip': 'Right Hip',
+      'left_thigh': 'Left Thigh',
+      'right_thigh': 'Right Thigh',
+      'left_knee': 'Left Knee',
+      'right_knee': 'Right Knee',
+      'left_calf': 'Left Calf',
+      'right_calf': 'Right Calf',
+    };
+    return displayNames[region] ?? region;
+  }
+}
+
+class BodyOutlinePainter extends CustomPainter {
+  final bool showFront;
+  
+  BodyOutlinePainter(this.showFront);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.withOpacity(0.5)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final fillPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final centerX = size.width * 0.5;
+    final path = Path();
+
+    if (showFront) {
+      // Draw simplified front body outline
+      // Head
+      canvas.drawCircle(
+        Offset(centerX, size.height * 0.15),
+        size.width * 0.08,
+        fillPaint,
+      );
+      canvas.drawCircle(
+        Offset(centerX, size.height * 0.15),
+        size.width * 0.08,
+        paint,
+      );
+      
+      // Body outline
+      path.moveTo(centerX - size.width * 0.12, size.height * 0.25); // neck
+      path.lineTo(centerX - size.width * 0.2, size.height * 0.35); // left shoulder
+      path.lineTo(centerX - size.width * 0.15, size.height * 0.7); // left side
+      path.lineTo(centerX - size.width * 0.08, size.height * 0.7); // left hip
+      path.lineTo(centerX - size.width * 0.1, size.height * 1.0); // left leg
+      path.lineTo(centerX - size.width * 0.05, size.height * 1.0); // left foot
+      path.lineTo(centerX + size.width * 0.05, size.height * 1.0); // right foot
+      path.lineTo(centerX + size.width * 0.1, size.height * 1.0); // right leg
+      path.lineTo(centerX + size.width * 0.08, size.height * 0.7); // right hip
+      path.lineTo(centerX + size.width * 0.15, size.height * 0.7); // right side
+      path.lineTo(centerX + size.width * 0.2, size.height * 0.35); // right shoulder
+      path.lineTo(centerX + size.width * 0.12, size.height * 0.25); // neck
+      path.close();
+    } else {
+      // Draw simplified back body outline (similar but slightly different)
+      // Head (back view)
+      canvas.drawCircle(
+        Offset(centerX, size.height * 0.15),
+        size.width * 0.08,
+        fillPaint,
+      );
+      canvas.drawCircle(
+        Offset(centerX, size.height * 0.15),
+        size.width * 0.08,
+        paint,
+      );
+      
+      // Back outline - similar to front
+      path.moveTo(centerX - size.width * 0.12, size.height * 0.25);
+      path.lineTo(centerX - size.width * 0.2, size.height * 0.35);
+      path.lineTo(centerX - size.width * 0.15, size.height * 0.7);
+      path.lineTo(centerX - size.width * 0.08, size.height * 0.7);
+      path.lineTo(centerX - size.width * 0.1, size.height * 1.0);
+      path.lineTo(centerX - size.width * 0.05, size.height * 1.0);
+      path.lineTo(centerX + size.width * 0.05, size.height * 1.0);
+      path.lineTo(centerX + size.width * 0.1, size.height * 1.0);
+      path.lineTo(centerX + size.width * 0.08, size.height * 0.7);
+      path.lineTo(centerX + size.width * 0.15, size.height * 0.7);
+      path.lineTo(centerX + size.width * 0.2, size.height * 0.35);
+      path.lineTo(centerX + size.width * 0.12, size.height * 0.25);
+      path.close();
+    }
+
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, paint);
+
+    // Add some anatomical reference lines
+    final dashedPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.3)
+      ..strokeWidth = 1;
+    
+    // Horizontal reference lines
+    canvas.drawLine(
+      Offset(centerX - size.width * 0.1, size.height * 0.35),
+      Offset(centerX + size.width * 0.1, size.height * 0.35),
+      dashedPaint,
+    );
+    canvas.drawLine(
+      Offset(centerX - size.width * 0.1, size.height * 0.55),
+      Offset(centerX + size.width * 0.1, size.height * 0.55),
+      dashedPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return oldDelegate != this;
+  }
+}

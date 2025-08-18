@@ -1,50 +1,47 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'tenant.dart';
+part of 'message_template.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TenantAdapter extends TypeAdapter<Tenant> {
+class MessageTemplateAdapter extends TypeAdapter<MessageTemplate> {
   @override
-  final int typeId = 0;
+  final int typeId = 4;
 
   @override
-  Tenant read(BinaryReader reader) {
+  MessageTemplate read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Tenant(
+    return MessageTemplate(
       id: fields[0] as String,
-      name: fields[1] as String,
-      country: fields[2] as String,
-      logoUrl: fields[3] as String?,
-      address: fields[4] as String?,
-      phone: fields[5] as String?,
-      createdAt: fields[6] as DateTime,
+      kind: fields[1] as MessageKind,
+      textByLocale: (fields[2] as Map).cast<String, String>(),
+      tenantId: fields[3] as String,
+      createdAt: fields[4] as DateTime,
+      updatedAt: fields[5] as DateTime,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Tenant obj) {
+  void write(BinaryWriter writer, MessageTemplate obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.name)
+      ..write(obj.kind)
       ..writeByte(2)
-      ..write(obj.country)
+      ..write(obj.textByLocale)
       ..writeByte(3)
-      ..write(obj.logoUrl)
+      ..write(obj.tenantId)
       ..writeByte(4)
-      ..write(obj.address)
+      ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.phone)
-      ..writeByte(6)
-      ..write(obj.createdAt);
+      ..write(obj.updatedAt);
   }
 
   @override
@@ -53,7 +50,7 @@ class TenantAdapter extends TypeAdapter<Tenant> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TenantAdapter &&
+      other is MessageTemplateAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

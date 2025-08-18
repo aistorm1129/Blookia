@@ -5,7 +5,21 @@
       "Bash(mkdir:*)",
       "Bash(flutter:*)",
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" --version)",
-      "Bash(\"F:\\flutter\\bin\\flutter.bat\" create --platforms android,ios,web .)"
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" create --platforms android,ios,web .)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" pub get)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" run)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" run -d chrome)",
+      "Bash(\"F:\\flutter\\bin\\dart.exe\" run build_runner build)",
+      "Bash(dart run:*)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" packages pub run build_runner build)",
+      "Bash(rm:*)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" packages pub run build_runner build --delete-conflicting-outputs)",
+      "Bash(find:*)",
+      "Bash(dart analyze:*)",
+      "Bash(sed:*)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" analyze)",
+      "Bash(timeout:*)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" run -d chrome --no-sound-null-safety)"
     ],
     "deny": [],
     "ask": []

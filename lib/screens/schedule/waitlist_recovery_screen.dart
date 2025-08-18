@@ -195,7 +195,7 @@ class _WaitlistRecoveryScreenState extends State<WaitlistRecoveryScreen>
             const SizedBox(height: 12),
             
             Text(
-              '$patientName accepted the appointment slot!',
+              '\$patientName accepted the appointment slot!',
               style: const TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),

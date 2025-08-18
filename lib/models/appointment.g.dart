@@ -28,7 +28,7 @@ class AppointmentAdapter extends TypeAdapter<Appointment> {
       noShowRisk: fields[8] as double,
       notes: fields[9] as String?,
       privateNotes: fields[10] as String?,
-      painMapScores: fields[11] as Map<String, int>?,
+      painMapScores: (fields[11] as Map?)?.cast<String, int>(),
       consentGiven: fields[12] as bool,
       recordingPath: fields[13] as String?,
       transcriptId: fields[14] as String?,
@@ -90,6 +90,153 @@ class AppointmentAdapter extends TypeAdapter<Appointment> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is AppointmentAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class AppointmentStatusAdapter extends TypeAdapter<AppointmentStatus> {
+  @override
+  final int typeId = 20;
+
+  @override
+  AppointmentStatus read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return AppointmentStatus.confirmed;
+      case 1:
+        return AppointmentStatus.waitlist;
+      case 2:
+        return AppointmentStatus.noShow;
+      case 3:
+        return AppointmentStatus.cancelled;
+      case 4:
+        return AppointmentStatus.completed;
+      default:
+        return AppointmentStatus.confirmed;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, AppointmentStatus obj) {
+    switch (obj) {
+      case AppointmentStatus.confirmed:
+        writer.writeByte(0);
+        break;
+      case AppointmentStatus.waitlist:
+        writer.writeByte(1);
+        break;
+      case AppointmentStatus.noShow:
+        writer.writeByte(2);
+        break;
+      case AppointmentStatus.cancelled:
+        writer.writeByte(3);
+        break;
+      case AppointmentStatus.completed:
+        writer.writeByte(4);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppointmentStatusAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class AppointmentTypeAdapter extends TypeAdapter<AppointmentType> {
+  @override
+  final int typeId = 21;
+
+  @override
+  AppointmentType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return AppointmentType.consultation;
+      case 1:
+        return AppointmentType.procedure;
+      case 2:
+        return AppointmentType.followUp;
+      case 3:
+        return AppointmentType.emergency;
+      default:
+        return AppointmentType.consultation;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, AppointmentType obj) {
+    switch (obj) {
+      case AppointmentType.consultation:
+        writer.writeByte(0);
+        break;
+      case AppointmentType.procedure:
+        writer.writeByte(1);
+        break;
+      case AppointmentType.followUp:
+        writer.writeByte(2);
+        break;
+      case AppointmentType.emergency:
+        writer.writeByte(3);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppointmentTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class ChannelAdapter extends TypeAdapter<Channel> {
+  @override
+  final int typeId = 22;
+
+  @override
+  Channel read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return Channel.inPerson;
+      case 1:
+        return Channel.teleconsult;
+      case 2:
+        return Channel.phone;
+      default:
+        return Channel.inPerson;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, Channel obj) {
+    switch (obj) {
+      case Channel.inPerson:
+        writer.writeByte(0);
+        break;
+      case Channel.teleconsult:
+        writer.writeByte(1);
+        break;
+      case Channel.phone:
+        writer.writeByte(2);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChannelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

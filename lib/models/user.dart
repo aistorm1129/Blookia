@@ -2,7 +2,15 @@ import 'package:hive/hive.dart';
 
 part 'user.g.dart';
 
-enum UserRole { admin, professional, reception }
+@HiveType(typeId: 2)
+enum UserRole {
+  @HiveField(0)
+  admin,
+  @HiveField(1) 
+  professional,
+  @HiveField(2)
+  reception,
+}
 
 @HiveType(typeId: 1)
 class User extends HiveObject {

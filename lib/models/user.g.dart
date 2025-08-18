@@ -66,7 +66,7 @@ class UserAdapter extends TypeAdapter<User> {
 
 class UserRoleAdapter extends TypeAdapter<UserRole> {
   @override
-  final int typeId = 10;
+  final int typeId = 2;
 
   @override
   UserRole read(BinaryReader reader) {
@@ -78,7 +78,7 @@ class UserRoleAdapter extends TypeAdapter<UserRole> {
       case 2:
         return UserRole.reception;
       default:
-        return UserRole.reception;
+        return UserRole.admin;
     }
   }
 
