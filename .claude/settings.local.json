@@ -36,7 +36,8 @@
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" doctor --android-licenses)",
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" devices)",
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" emulators)",
-      "Bash(\"F:\\flutter\\bin\\flutter.bat\" emulators --launch Medium_Phone_API_36.0)"
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" emulators --launch Medium_Phone_API_36.0)",
+      "Bash(\"F:\\flutter\\bin\\dart.exe\" run build_runner build --delete-conflicting-outputs)"
     ],
     "deny": [],
     "ask": []
