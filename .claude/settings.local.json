@@ -30,7 +30,8 @@
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --no-wasm)",
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --help)",
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --no-wasm-dry-run -O2)",
-      "Bash(\"F:\\flutter\\bin\\dart.exe\" analyze)"
+      "Bash(\"F:\\flutter\\bin\\dart.exe\" analyze)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" clean)"
     ],
     "deny": [],
     "ask": []
