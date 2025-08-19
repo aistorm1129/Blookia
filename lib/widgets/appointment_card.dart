@@ -367,7 +367,6 @@ class AppointmentCard extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => ConsultationModeScreen(
-          appointment: appointment,
           patient: patient!,
         ),
       ),

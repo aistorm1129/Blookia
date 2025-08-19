@@ -127,9 +127,31 @@ class _TeleconsultScreenState extends State<TeleconsultScreen>
     });
     _sessionTimer?.cancel();
     
-    // Update appointment status
+    // Update appointment status to completed
+    final updatedAppointment = Appointment(
+      id: widget.appointment.id,
+      patientId: widget.appointment.patientId,
+      professionalId: widget.appointment.professionalId,
+      start: widget.appointment.start,
+      end: widget.appointment.end,
+      type: widget.appointment.type,
+      status: AppointmentStatus.completed,
+      channel: widget.appointment.channel,
+      notes: widget.appointment.notes,
+      noShowRisk: widget.appointment.noShowRisk,
+      createdAt: widget.appointment.createdAt,
+      updatedAt: DateTime.now(),
+      consentGiven: widget.appointment.consentGiven,
+      isUrgent: widget.appointment.isUrgent,
+      privateNotes: widget.appointment.privateNotes,
+      painMapScores: widget.appointment.painMapScores,
+      recordingPath: widget.appointment.recordingPath,
+      transcriptId: widget.appointment.transcriptId,
+      durationMinutes: widget.appointment.durationMinutes,
+    );
+    
     Provider.of<AppointmentProvider>(context, listen: false)
-        .completeAppointment(widget.appointment.id);
+        .updateAppointment(updatedAppointment);
     
     _showSessionSummaryDialog();
   }

@@ -121,10 +121,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       method: _selectedPaymentMethod,
       status: PaymentStatus.pending,
       description: _getPaymentDescription(),
-      createdAt: DateTime.now(),
-      dueDate: DateTime.now().add(const Duration(days: 1)),
-      installments: _installments,
-      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      timestamp: DateTime.now(),
     );
 
     // Generate QR Code data
@@ -200,9 +197,18 @@ class _PaymentScreenState extends State<PaymentScreen>
       Navigator.of(context).pop(); // Close processing dialog
       
       // Update payment status
-      final updatedPayment = _pendingPayment!.copyWith(
+      final updatedPayment = Payment(
+        id: _pendingPayment!.id,
+        patientId: _pendingPayment!.patientId,
+        amount: _pendingPayment!.amount,
+        method: _pendingPayment!.method,
         status: PaymentStatus.completed,
-        paidAt: DateTime.now(),
+        timestamp: _pendingPayment!.timestamp,
+        appointmentId: _pendingPayment!.appointmentId,
+        description: _pendingPayment!.description,
+        txId: _pendingPayment!.txId,
+        qrCodeData: _pendingPayment!.qrCodeData,
+        paymentLink: _pendingPayment!.paymentLink,
       );
 
       // Show success dialog
@@ -672,7 +678,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           const SizedBox(height: 16),
           
           // Installments (for credit card)
-          if (_selectedPaymentMethod == PaymentMethod.creditCard)
+          if (_selectedPaymentMethod == PaymentMethod.card)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -757,7 +763,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     _buildSummaryRow('Discount', -_discountAmount, color: Colors.red),
                   const Divider(),
                   _buildSummaryRow('TOTAL', _finalAmount, isBold: true),
-                  if (_selectedPaymentMethod == PaymentMethod.creditCard && _installments > 1)
+                  if (_selectedPaymentMethod == PaymentMethod.card && _installments > 1)
                     _buildSummaryRow('Per Month', _finalAmount / _installments, fontSize: 14),
                 ],
               ),
@@ -1083,14 +1089,14 @@ class _PaymentScreenState extends State<PaymentScreen>
     switch (method) {
       case PaymentMethod.pix:
         return 'PIX (Instant)';
-      case PaymentMethod.creditCard:
-        return 'Credit Card';
-      case PaymentMethod.debitCard:
-        return 'Debit Card';
+      case PaymentMethod.card:
+        return 'Card';
       case PaymentMethod.cash:
         return 'Cash';
-      case PaymentMethod.bankTransfer:
+      case PaymentMethod.transfer:
         return 'Bank Transfer';
+      case PaymentMethod.insurance:
+        return 'Insurance';
     }
   }
 
@@ -1098,14 +1104,14 @@ class _PaymentScreenState extends State<PaymentScreen>
     switch (method) {
       case PaymentMethod.pix:
         return Icons.qr_code;
-      case PaymentMethod.creditCard:
-        return Icons.credit_card;
-      case PaymentMethod.debitCard:
+      case PaymentMethod.card:
         return Icons.credit_card;
       case PaymentMethod.cash:
         return Icons.money;
-      case PaymentMethod.bankTransfer:
+      case PaymentMethod.transfer:
         return Icons.account_balance;
+      case PaymentMethod.insurance:
+        return Icons.health_and_safety;
     }
   }
 }

@@ -210,14 +210,15 @@ class PatientCard extends StatelessWidget {
     );
   }
 
-  int _calculateAge(DateTime dateOfBirth) {
+  String _calculateAge(DateTime? dateOfBirth) {
+    if (dateOfBirth == null) return 'Unknown';
     final now = DateTime.now();
     int age = now.year - dateOfBirth.year;
     if (now.month < dateOfBirth.month || 
         (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
       age--;
     }
-    return age;
+    return age.toString();
   }
 
   String _getInitials(String name) {

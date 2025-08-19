@@ -125,7 +125,6 @@ class _PrivateNotesSectionState extends State<PrivateNotesSection> {
       itemCount: widget.patient.internalNotes.length,
       itemBuilder: (context, index) {
         final note = widget.patient.internalNotes[index];
-        final isBeingEdited = _isEditing && _editingIndex == index;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -358,7 +357,8 @@ class _PrivateNotesSectionState extends State<PrivateNotesSection> {
             ..[_editingIndex!] = _noteController.text.trim())
           : [...widget.patient.internalNotes, _noteController.text.trim()],
       loyaltyPoints: widget.patient.loyaltyPoints,
-      tenantId: widget.patient.tenantId,
+      createdAt: widget.patient.createdAt,
+      updatedAt: DateTime.now(),
     );
 
     widget.patientProvider.updatePatient(updatedPatient);
@@ -426,7 +426,8 @@ class _PrivateNotesSectionState extends State<PrivateNotesSection> {
       medications: widget.patient.medications,
       internalNotes: updatedNotes,
       loyaltyPoints: widget.patient.loyaltyPoints,
-      tenantId: widget.patient.tenantId,
+      createdAt: widget.patient.createdAt,
+      updatedAt: DateTime.now(),
     );
 
     widget.patientProvider.updatePatient(updatedPatient);

@@ -300,7 +300,7 @@ class _TranscriptEditorState extends State<TranscriptEditor>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  version.editedBy,
+                                  version.editedBy ?? 'Unknown',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,

@@ -35,8 +35,8 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     ).animate(_controller);
 
     _colorAnimation = ColorTween(
-      begin: const Color(0xFF2563EB).withOpacity(0.1),
-      end: const Color(0xFF10B981).withOpacity(0.1),
+      begin: const Color(0xFF2563EB).withValues(alpha: 0.1),
+      end: const Color(0xFF10B981).withValues(alpha: 0.1),
     ).animate(_colorController);
   }
 
@@ -106,7 +106,7 @@ class BackgroundPainter extends CustomPainter {
 
     // Draw wave-like shapes
     final wavePaint = Paint()
-      ..color = color.withOpacity(0.05)
+      ..color = color.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
 
     final path = Path();

@@ -98,27 +98,27 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
       _markers.addAll([
         Marker3D(
           id: '1',
-          title: 'Forehead',
-          description: 'Common area for Botox treatment',
-          position: const Offset(0.5, 0.2),
-          markerType: Marker3DType.treatment,
-          color: Colors.blue,
+          modelId: _selectedModel,
+          note: 'Forehead - Common area for Botox treatment',
+          position: {'x': 0.5, 'y': 0.2, 'z': 0.0},
+          color: 'blue',
+          createdAt: DateTime.now(),
         ),
         Marker3D(
           id: '2',
-          title: 'Crow\'s Feet',
-          description: 'Lateral canthal lines',
-          position: const Offset(0.7, 0.3),
-          markerType: Marker3DType.treatment,
-          color: Colors.green,
+          modelId: _selectedModel,
+          note: 'Crow\'s Feet - Lateral canthal lines',
+          position: {'x': 0.7, 'y': 0.3, 'z': 0.0},
+          color: 'green',
+          createdAt: DateTime.now(),
         ),
         Marker3D(
           id: '3',
-          title: 'Nasolabial Fold',
-          description: 'Smile lines - filler area',
-          position: const Offset(0.6, 0.5),
-          markerType: Marker3DType.information,
-          color: Colors.orange,
+          modelId: _selectedModel,
+          note: 'Nasolabial Fold - Smile lines - filler area',
+          position: {'x': 0.6, 'y': 0.5, 'z': 0.0},
+          color: 'orange',
+          createdAt: DateTime.now(),
         ),
       ]);
     }
@@ -129,14 +129,15 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
     
     final marker = Marker3D(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'New Marker',
-      description: '',
-      position: Offset(
-        localPosition.dx / MediaQuery.of(context).size.width,
-        localPosition.dy / MediaQuery.of(context).size.height,
-      ),
-      markerType: Marker3DType.custom,
-      color: Colors.red,
+      modelId: _selectedModel,
+      note: 'New Marker',
+      position: {
+        'x': localPosition.dx / MediaQuery.of(context).size.width,
+        'y': localPosition.dy / MediaQuery.of(context).size.height,
+        'z': 0.0,
+      },
+      color: 'red',
+      createdAt: DateTime.now(),
     );
     
     setState(() {
@@ -148,41 +149,22 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
   }
 
   void _showMarkerEditDialog(Marker3D marker) {
-    _markerController.text = marker.description;
+    _markerController.text = marker.note ?? '';
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit ${marker.title}'),
+        title: Text('Edit Marker'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _markerController,
               decoration: const InputDecoration(
-                labelText: 'Description',
+                labelText: 'Note',
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<Marker3DType>(
-              value: marker.markerType,
-              decoration: const InputDecoration(
-                labelText: 'Marker Type',
-                border: OutlineInputBorder(),
-              ),
-              items: Marker3DType.values.map((type) {
-                return DropdownMenuItem(
-                  value: type,
-                  child: Text(_getMarkerTypeDisplay(type)),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  marker.markerType = value!;
-                });
-              },
             ),
           ],
         ),
@@ -204,7 +186,7 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
           ElevatedButton(
             onPressed: () {
               setState(() {
-                marker.description = _markerController.text;
+                marker.note = _markerController.text;
               });
               Navigator.pop(context);
             },
@@ -217,7 +199,7 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
 
   void _exportMarkers() {
     final markersText = _markers.map((marker) {
-      return '${marker.title}: ${marker.description}';
+      return 'Marker ${marker.id}: ${marker.note ?? 'No note'}';
     }).join('\n');
     
     Clipboard.setData(ClipboardData(text: markersText));
@@ -522,8 +504,8 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
   List<Widget> _buildMarkers() {
     return _markers.map((marker) {
       final screenPosition = Offset(
-        marker.position.dx * MediaQuery.of(context).size.width,
-        marker.position.dy * MediaQuery.of(context).size.height,
+        (marker.position['x'] ?? 0.0) * MediaQuery.of(context).size.width,
+        (marker.position['y'] ?? 0.0) * MediaQuery.of(context).size.height,
       );
       
       return Positioned(
@@ -551,7 +533,7 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: marker.color,
+                        color: _getMarkerColor(marker.color),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: Colors.white,
@@ -559,14 +541,14 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: marker.color.withOpacity(0.5),
+                            color: _getMarkerColor(marker.color).withOpacity(0.5),
                             blurRadius: 8,
                             spreadRadius: isSelected ? 4 : 2,
                           ),
                         ],
                       ),
                       child: Icon(
-                        _getMarkerIcon(marker.markerType),
+                        _getMarkerIcon(marker.icon),
                         color: Colors.white,
                         size: 12,
                       ),
@@ -588,7 +570,7 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                marker.title,
+                                'Marker ${marker.id}',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -596,9 +578,9 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              if (marker.description.isNotEmpty)
+                              if ((marker.note ?? '').isNotEmpty)
                                 Text(
-                                  marker.description,
+                                  marker.note!,
                                   style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 10,
@@ -646,14 +628,14 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                 width: 16,
                 height: 16,
                 decoration: BoxDecoration(
-                  color: marker.color,
+                  color: _getMarkerColor(marker.color),
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  marker.title,
+                  'Marker ${marker.id}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -674,13 +656,13 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
               ),
             ],
           ),
-          if (marker.description.isNotEmpty) ...[
+          if ((marker.note ?? '').isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(marker.description),
+            Text(marker.note!),
           ],
           const SizedBox(height: 8),
           Text(
-            'Type: ${_getMarkerTypeDisplay(marker.markerType)}',
+            'Created: ${marker.createdAt.toString().split(' ')[0]}',
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 12,
@@ -735,10 +717,10 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isSelected ? marker.color.withOpacity(0.1) : null,
+                      color: isSelected ? _getMarkerColor(marker.color).withOpacity(0.1) : null,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? marker.color : Colors.grey.withOpacity(0.3),
+                        color: isSelected ? _getMarkerColor(marker.color) : Colors.grey.withOpacity(0.3),
                       ),
                     ),
                     child: Column(
@@ -750,14 +732,14 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                               width: 12,
                               height: 12,
                               decoration: BoxDecoration(
-                                color: marker.color,
+                                color: _getMarkerColor(marker.color),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                             ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                marker.title,
+                                'Marker ${marker.id}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -769,7 +751,7 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _getMarkerTypeDisplay(marker.markerType),
+                          marker.note ?? 'No note',
                           style: const TextStyle(fontSize: 10),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -828,28 +810,36 @@ class _Viewer3DScreenState extends State<Viewer3DScreen>
     }
   }
 
-  String _getMarkerTypeDisplay(Marker3DType type) {
-    switch (type) {
-      case Marker3DType.treatment:
-        return 'Treatment Area';
-      case Marker3DType.information:
-        return 'Information';
-      case Marker3DType.warning:
-        return 'Warning';
-      case Marker3DType.custom:
-        return 'Custom';
+  Color _getMarkerColor(String? colorString) {
+    switch (colorString) {
+      case 'red':
+        return Colors.red;
+      case 'blue':
+        return Colors.blue;
+      case 'green':
+        return Colors.green;
+      case 'orange':
+        return Colors.orange;
+      case 'purple':
+        return Colors.purple;
+      case 'yellow':
+        return Colors.yellow;
+      default:
+        return Colors.red;
     }
   }
 
-  IconData _getMarkerIcon(Marker3DType type) {
-    switch (type) {
-      case Marker3DType.treatment:
+  IconData _getMarkerIcon(String? iconString) {
+    switch (iconString) {
+      case 'healing':
         return Icons.healing;
-      case Marker3DType.information:
+      case 'info':
         return Icons.info;
-      case Marker3DType.warning:
+      case 'warning':
         return Icons.warning;
-      case Marker3DType.custom:
+      case 'place':
+        return Icons.place;
+      default:
         return Icons.place;
     }
   }
@@ -1026,7 +1016,7 @@ class Model3DPainter extends CustomPainter {
     // Fingers
     for (int i = 0; i < 5; i++) {
       final x = centerX - 30 + (i * 15);
-      final height = i == 1 ? 60 : (i == 2 ? 70 : 50); // Middle finger longer
+      final height = i == 1 ? 60.0 : (i == 2 ? 70.0 : 50.0); // Middle finger longer
       
       canvas.drawRRect(
         RRect.fromRectAndRadius(

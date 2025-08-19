@@ -7,8 +7,6 @@ import '../../models/patient.dart';
 import '../../models/appointment.dart';
 import '../../models/chat_message.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/patient_provider.dart';
-import '../../providers/appointment_provider.dart';
 
 class AIChatScreen extends StatefulWidget {
   final String? context; // 'dashboard', 'patient', 'consultation', 'general'
@@ -40,7 +38,6 @@ class _AIChatScreenState extends State<AIChatScreen>
   
   // AI Assistant Modes
   AIAssistantMode _currentMode = AIAssistantMode.general;
-  String _assistantPersonality = 'professional';
 
   @override
   void initState() {
@@ -74,10 +71,9 @@ class _AIChatScreenState extends State<AIChatScreen>
     // Add welcome message
     _addMessage(ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: _getWelcomeMessage(),
-      isFromUser: false,
+      from: MessageSender.assistant,
+      text: _getWelcomeMessage(),
       timestamp: DateTime.now(),
-      messageType: ChatMessageType.text,
     ));
     
     // Generate context-specific suggestions
@@ -203,10 +199,9 @@ class _AIChatScreenState extends State<AIChatScreen>
     // Add user message
     _addMessage(ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: content,
-      isFromUser: true,
+      from: MessageSender.patient,
+      text: content,
       timestamp: DateTime.now(),
-      messageType: ChatMessageType.text,
     ));
     
     _messageController.clear();
@@ -233,11 +228,9 @@ class _AIChatScreenState extends State<AIChatScreen>
       
       _addMessage(ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        content: response,
-        isFromUser: false,
+        from: MessageSender.assistant,
+        text: response,
         timestamp: DateTime.now(),
-        messageType: ChatMessageType.text,
-        confidence: 0.85 + Random().nextDouble() * 0.14, // 0.85-0.99
       ));
     });
   }
@@ -396,8 +389,8 @@ class _AIChatScreenState extends State<AIChatScreen>
   void _exportChat() {
     final chatText = _messages.map((message) {
       final timestamp = "${message.timestamp.day}/${message.timestamp.month} ${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}";
-      final sender = message.isFromUser ? 'You' : 'Blookia AI';
-      return "[$timestamp] $sender: ${message.content}";
+      final sender = message.from == MessageSender.patient ? 'You' : 'Blookia AI';
+      return "[$timestamp] $sender: ${message.text}";
     }).join('\n\n');
     
     Clipboard.setData(ClipboardData(text: chatText));
@@ -444,7 +437,7 @@ class _AIChatScreenState extends State<AIChatScreen>
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  _getModeDisplayName(),
+                  _getModeDisplayName(_currentMode),
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -644,9 +637,9 @@ class _AIChatScreenState extends State<AIChatScreen>
       margin: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: message.isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.from == MessageSender.patient ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (!message.isFromUser) ...[
+          if (message.from == MessageSender.assistant) ...[
             CircleAvatar(
               radius: 16,
               backgroundColor: Colors.blue,
@@ -659,7 +652,7 @@ class _AIChatScreenState extends State<AIChatScreen>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: message.isFromUser
+                color: message.from == MessageSender.patient
                     ? Theme.of(context).primaryColor
                     : Colors.grey.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
@@ -668,9 +661,9 @@ class _AIChatScreenState extends State<AIChatScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    message.content,
+                    message.text,
                     style: TextStyle(
-                      color: message.isFromUser ? Colors.white : Colors.black,
+                      color: message.from == MessageSender.patient ? Colors.white : Colors.black,
                       fontSize: 14,
                       height: 1.4,
                     ),
@@ -684,31 +677,13 @@ class _AIChatScreenState extends State<AIChatScreen>
                       Text(
                         "${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}",
                         style: TextStyle(
-                          color: message.isFromUser 
+                          color: message.from == MessageSender.patient 
                               ? Colors.white.withOpacity(0.7) 
                               : Colors.grey[600],
                           fontSize: 10,
                         ),
                       ),
                       
-                      if (!message.isFromUser && message.confidence != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _getConfidenceColor(message.confidence!),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            "${(message.confidence! * 100).round()}%",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ],
@@ -716,7 +691,7 @@ class _AIChatScreenState extends State<AIChatScreen>
             ),
           ),
           
-          if (message.isFromUser) ...[
+          if (message.from == MessageSender.patient) ...[
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 16,
@@ -782,14 +757,9 @@ class _AIChatScreenState extends State<AIChatScreen>
     );
   }
 
-  Color _getConfidenceColor(double confidence) {
-    if (confidence >= 0.9) return Colors.green;
-    if (confidence >= 0.75) return Colors.orange;
-    return Colors.red;
-  }
 
-  String _getModeDisplayName() {
-    switch (_currentMode) {
+  String _getModeDisplayName(AIAssistantMode mode) {
+    switch (mode) {
       case AIAssistantMode.clinical:
         return 'Clinical Assistant';
       case AIAssistantMode.consultation:
@@ -826,18 +796,6 @@ class _AIChatScreenState extends State<AIChatScreen>
     );
   }
 
-  String _getModeDisplayName(AIAssistantMode mode) {
-    switch (mode) {
-      case AIAssistantMode.clinical:
-        return 'Clinical Assistant';
-      case AIAssistantMode.consultation:
-        return 'Consultation Support';
-      case AIAssistantMode.analytics:
-        return 'Analytics Assistant';
-      case AIAssistantMode.general:
-        return 'General Assistant';
-    }
-  }
 
   String _getModeDescription(AIAssistantMode mode) {
     switch (mode) {

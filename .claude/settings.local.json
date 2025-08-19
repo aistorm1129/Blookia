@@ -19,7 +19,18 @@
       "Bash(sed:*)",
       "Bash(\"F:\\flutter\\bin\\flutter.bat\" analyze)",
       "Bash(timeout:*)",
-      "Bash(\"F:\\flutter\\bin\\flutter.bat\" run -d chrome --no-sound-null-safety)"
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" run -d chrome --no-sound-null-safety)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" analyze --no-fatal-infos)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" analyze --no-fatal-infos --no-fatal-warnings)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" analyze --fatal-warnings)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --no-sound-null-safety)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --no-wasm-dry-run)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --web-renderer html)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --no-wasm)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --help)",
+      "Bash(\"F:\\flutter\\bin\\flutter.bat\" build web --no-wasm-dry-run -O2)",
+      "Bash(\"F:\\flutter\\bin\\dart.exe\" analyze)"
     ],
     "deny": [],
     "ask": []

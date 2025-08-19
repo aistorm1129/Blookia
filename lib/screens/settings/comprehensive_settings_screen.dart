@@ -321,7 +321,7 @@ class _ComprehensiveSettingsScreenState extends State<ComprehensiveSettingsScree
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.settings_sync, color: Theme.of(context).primaryColor),
+                      Icon(Icons.sync, color: Theme.of(context).primaryColor),
                       const SizedBox(width: 12),
                       const Text(
                         'Sync Settings',

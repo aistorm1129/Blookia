@@ -46,14 +46,14 @@ class AppProvider with ChangeNotifier {
   void addOfflineOperation(String operation, Map<String, dynamic> data) async {
     if (!_isOfflineMode) return;
 
-    final operation_data = {
+    final operationData = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
       'operation': operation,
       'data': data,
       'timestamp': DateTime.now().toIso8601String(),
     };
 
-    _offlineQueue.add(operation_data);
+    _offlineQueue.add(operationData);
     
     final box = Hive.box('offline_queue');
     await box.put('queue', _offlineQueue);

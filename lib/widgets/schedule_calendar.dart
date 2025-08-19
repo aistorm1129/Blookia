@@ -138,7 +138,6 @@ class _ScheduleCalendarState extends State<ScheduleCalendar> {
 
   Widget _buildCalendarGrid(DateTime month) {
     final firstDay = DateTime(month.year, month.month, 1);
-    final lastDay = DateTime(month.year, month.month + 1, 0);
     final startDate = firstDay.subtract(Duration(days: firstDay.weekday - 1));
     
     return GridView.builder(
@@ -235,9 +234,11 @@ class _ScheduleCalendarState extends State<ScheduleCalendar> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.left(
-          color: _getStatusColor(appointment.status),
-          width: 4,
+        border: Border(
+          left: BorderSide(
+            color: _getStatusColor(appointment.status),
+            width: 4,
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -254,7 +255,7 @@ class _ScheduleCalendarState extends State<ScheduleCalendar> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  appointment.patientName,
+                  'Patient ${appointment.patientId.substring(0, 6)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
